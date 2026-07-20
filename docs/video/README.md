@@ -7,6 +7,9 @@
 93A28FE92FC4827E36F320AFDC72ED281D15AA03492189087F5BE0B0DA391B38
 ```
 
+The judge-accessible YouTube upload is:
+https://youtu.be/kGGdz649zCQ
+
 The video states that the fake agent makes the rehearsal deterministic while
 the edits, deleted test, pytest executions, Gate verdicts, and audit chain are
 real. It also identifies the separate live Codex run and its independently

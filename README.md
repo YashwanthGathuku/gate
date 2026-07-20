@@ -5,6 +5,14 @@ agent's final completion claim, protects trusted test inputs, runs an isolated
 verifier, returns failure evidence to the same Codex thread, and writes a
 SHA-256 chained audit log.
 
+## OpenAI Build Week submission
+
+- Devpost: https://devpost.com/software/gate-0lypv2
+- Demo video: https://youtu.be/kGGdz649zCQ
+- Permanent release evidence: [`docs/evidence`](docs/evidence)
+- Anchored rehearsal root:
+  `200042504cd90869d2bc8edcd60278049e231ead88ae69a60919a64a335d4a20`
+
 ## Supported platforms
 
 - Python 3.10 or newer.
