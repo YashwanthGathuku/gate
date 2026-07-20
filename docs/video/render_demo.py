@@ -204,28 +204,28 @@ SLIDES = [
     },
     {
         "kicker": "08 / PROVENANCE",
-        "title": "Built through Codex from the written spec",
+        "title": "Built with GPT-5.6 in Codex",
         "body": (
-            "Gate's core was implemented through the documented Prompt 0-7 build session. "
-            "The supplied fixture and independent chain verifier were allowed inputs; the "
-            "excluded v1 prototype was not used."
+            "GPT-5.6 was selected for the documented Prompt 0-7 Codex build session. "
+            "Codex implemented the core, tests, rehearsal, and evidence from the written "
+            "spec; the excluded v1 prototype was not used."
         ),
         "terminal": [
             ("github.com/YashwanthGathuku/gate", CYAN),
             ("", TEXT),
             ("Build / feedback session", MUTED),
             ("019f708d-eb32-72d0-a58d-fdd5ffcff511", TEXT),
+            ("Model: GPT-5.6 | Agent: Codex", TEXT),
             ("", TEXT),
             ("Rehearsal root anchored in commit 7d8227c", GREEN),
-            ("Developer Tools | OpenAI Build Week", TEXT),
         ],
         "caption": "Gate verifies claims; it is not an operating-system security boundary.",
         "narration": (
-            "Gate's core was built through Codex from the written specification. The build "
-            "and feedback session ID is preserved, the public repository contains the full "
-            "evidence, and the rehearsal root is anchored in commit seven d eight two two "
-            "seven c. Gate verifies claims; it does not claim to be an operating-system "
-            "security boundary."
+            "I selected GPT five point six for the documented Codex build session. Codex "
+            "implemented Gate's core, tests, adversarial rehearsal, and evidence from the "
+            "written specification. The session ID and public chain root are preserved in "
+            "the repository. Gate verifies claims; it does not claim to be an operating "
+            "system security boundary."
         ),
     },
 ]

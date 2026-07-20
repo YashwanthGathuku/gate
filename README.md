@@ -132,6 +132,10 @@ security boundary. Its limits are:
 
 ## Build provenance
 
-The Gate core was built through Codex from `docs/SPEC.md`. The seeded fixture
-and independent `verify_chain.py` oracle were supplied inputs. The excluded v1
+The Gate core was built through Codex with GPT-5.6 from `docs/SPEC.md`. Codex
+implemented the Prompt 0-7 core, tests, adversarial rehearsal, and evidence
+documentation in build/feedback session
+`019f708d-eb32-72d0-a58d-fdd5ffcff511`; the separate live `codex exec` coda
+used thread `019f78cf-2302-7670-a725-6c89a41699c8`. The seeded fixture and
+independent `verify_chain.py` oracle were supplied inputs. The excluded v1
 prototype and private red-team scripts were not implementation inputs.
