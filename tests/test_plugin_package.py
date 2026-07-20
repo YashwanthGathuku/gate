@@ -10,6 +10,12 @@ from pathlib import Path
 import pytest
 
 from scripts.build_plugin_assets import build_assets
+from scripts.install_plugin import (
+    InstallError,
+    copy_plugin,
+    main as install_main,
+    update_marketplace,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,3 +115,116 @@ def test_official_plugin_validator_accepts_package():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Plugin validation passed" in result.stdout
+
+
+def write_marketplace(path: Path, plugins: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "name": "personal",
+                "interface": {"displayName": "Personal"},
+                "plugins": plugins,
+                "custom": {"preserve": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_copy_plugin_uses_allowlist_and_excludes_repo_and_cache_content(tmp_path):
+    destination = tmp_path / "home" / "plugins" / "gate"
+
+    copy_plugin(ROOT, destination)
+
+    assert (destination / "gate.py").is_file()
+    assert (destination / "gatelib" / "session.py").is_file()
+    assert (destination / "skills" / "run" / "SKILL.md").is_file()
+    assert not (destination / ".git").exists()
+    assert not (destination / "tests").exists()
+    assert not list(destination.rglob("__pycache__"))
+    assert not list(destination.rglob("*.pyc"))
+
+
+def test_copy_plugin_replaces_stale_destination_content(tmp_path):
+    destination = tmp_path / "home" / "plugins" / "gate"
+    destination.mkdir(parents=True)
+    (destination / ".mcp.json").write_text("{}", encoding="utf-8")
+
+    copy_plugin(ROOT, destination)
+
+    assert not (destination / ".mcp.json").exists()
+    assert (destination / ".codex-plugin" / "plugin.json").is_file()
+
+
+def test_copy_plugin_rejects_source_without_gate_manifest(tmp_path):
+    source = tmp_path / "empty"
+    source.mkdir()
+
+    with pytest.raises(InstallError, match="plugin.json"):
+        copy_plugin(source, tmp_path / "plugins" / "gate")
+
+
+def test_update_marketplace_preserves_unrelated_plugins_and_top_level_keys(tmp_path):
+    path = tmp_path / ".agents" / "plugins" / "marketplace.json"
+    other = {
+        "name": "other",
+        "source": {"source": "local", "path": "./plugins/other"},
+    }
+    write_marketplace(path, [other])
+
+    update_marketplace(path, plugin_path=tmp_path / "plugins" / "gate")
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["custom"] == {"preserve": True}
+    assert [entry["name"] for entry in payload["plugins"]] == ["other", "gate"]
+    gate = payload["plugins"][1]
+    assert gate["source"] == {"source": "local", "path": "./plugins/gate"}
+    assert gate["policy"]["installation"] == "AVAILABLE"
+
+
+def test_update_marketplace_replaces_gate_in_place(tmp_path):
+    path = tmp_path / ".agents" / "plugins" / "marketplace.json"
+    write_marketplace(
+        path,
+        [
+            {"name": "before"},
+            {"name": "gate", "source": {"source": "local", "path": "old"}},
+            {"name": "after"},
+        ],
+    )
+
+    update_marketplace(path, plugin_path=tmp_path / "plugins" / "gate")
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert [entry["name"] for entry in payload["plugins"]] == [
+        "before",
+        "gate",
+        "after",
+    ]
+    assert payload["plugins"][1]["source"]["path"] == "./plugins/gate"
+
+
+def test_installer_invokes_codex_plugin_add_with_argv(tmp_path):
+    home = tmp_path / "home"
+    calls = []
+
+    def process_runner(argv, cwd):
+        calls.append((argv, cwd))
+        return 0
+
+    result = install_main(
+        ["--source", str(ROOT), "--home", str(home)],
+        process_runner=process_runner,
+        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
+    )
+
+    assert result == 0
+    assert calls == [
+        (["/usr/bin/codex", "plugin", "add", "gate@personal", "--json"], home)
+    ]
+    assert (home / "plugins" / "gate" / "gate.py").is_file()
+    marketplace = json.loads(
+        (home / ".agents" / "plugins" / "marketplace.json").read_text()
+    )
+    assert marketplace["plugins"][0]["name"] == "gate"
