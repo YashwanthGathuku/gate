@@ -2,6 +2,8 @@
 
 This directory contains the permanent evidence used for the Gate v2 release.
 
+Public YouTube and Devpost publication read-back: `submission_publication.txt`
+
 ## Deterministic rehearsal
 
 - Console transcript: `rehearsal_console.txt`
@@ -35,8 +37,8 @@ python verify_chain.py docs/evidence/live_audit_20260719_051748.jsonl
 ## Test transcript
 
 `test_results.txt` preserves the pre-plugin core run. The later
-`plugin_test_results.txt` records `153 passed, 4 skipped` on native Windows and
-`157 passed` on WSL 2. The Windows skips are POSIX process-group and symlink
+`plugin_test_results.txt` records `156 passed, 4 skipped` on native Windows and
+`160 passed` on WSL 2. The Windows skips are POSIX process-group and symlink
 cases; native Windows is not a supported Gate runtime. The GitHub Actions
 matrix also runs the complete suite on Linux with Python 3.10 and 3.13.
 
@@ -45,6 +47,8 @@ matrix also runs the complete suite on Linux with Python 3.10 and 3.13.
 - Package validator: `plugin_validation.txt`
 - Plugin-era full test transcript: `plugin_test_results.txt`
 - Version 0.2.0 native and WSL installation: `plugin_0_2_install.txt`
+- Version 0.2.1 hardened native and WSL installation:
+  `plugin_0_2_1_install.txt`
 - Personal marketplace installation and installed-runtime checks:
   `plugin_install.txt`
 - Fresh Codex `$gate:audit` invocation: `plugin_skill_audit.txt`
@@ -63,6 +67,7 @@ chain validation.
 
 ## Live real-project video
 
+- Public YouTube video: https://youtu.be/njgvvLapxs0
 - Recording: [`../video/gate-real-project-live.mp4`](../video/gate-real-project-live.mp4)
 - Exact outputs and audit: [`real_project_video`](real_project_video/README.md)
 - Ordinary Codex task: `019f8114-db91-7e02-9be5-5ea375163ecc`

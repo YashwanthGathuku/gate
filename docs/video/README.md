@@ -7,6 +7,8 @@ working-proof recording. It is an actual desktop capture of authenticated
 Codex runs against two clean clones of the pinned `pytest-dev/iniconfig`
 project, not a reconstruction of prior console text.
 
+Public YouTube video: https://youtu.be/njgvvLapxs0
+
 The 2 minute 55 second, 1920x1080 H.264 file has SHA-256:
 
 ```text

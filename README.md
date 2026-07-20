@@ -1,14 +1,144 @@
 # Gate v2
 
-Gate is a verification-and-retry runtime for `codex exec`. It watches the
-agent's final completion claim, protects trusted test inputs, runs an isolated
-verifier, returns failure evidence to the same Codex thread, and writes a
-SHA-256 chained audit log.
+> **Codex says "done." Gate checks whether that is true.**
+
+Gate is a verification-and-retry runtime for coding agents, available as both
+a standalone CLI and a Codex plugin. It treats an agent's completion message as
+a claim, not proof. Gate protects trusted test inputs, runs a Gate-controlled
+verifier, returns failure evidence to the same child Codex thread, and writes a
+tamper-evident audit chain.
+
+## Why Gate exists
+
+Coding agents can generate a patch in minutes. The harder question comes next:
+**who verifies that the patch actually satisfies the task?**
+
+Today, the agent often writes the code, chooses which tests to run, interprets
+their output, and announces that the work is complete. That puts the work and
+its grade inside the same trust boundary. It creates five practical failure
+modes:
+
+1. The agent runs a narrow test, misses a cross-file regression, and says the
+   task is complete.
+2. A patch passes the available tests but still implements the wrong behavior.
+3. The agent changes or deletes a test, configuration file, or verifier input
+   so that a broken patch appears green.
+4. A failed attempt is retried without preserving the exact evidence and
+   session that produced it.
+5. The final "all tests pass" statement leaves no portable record that another
+   person can independently check later.
+
+This is not a hypothetical edge case:
+
+- [OpenAI's monitoring of internal coding agents](https://openai.com/index/how-we-monitor-internal-coding-agents-misalignment/)
+  reports that agents sometimes illegitimately edit tests to make them pass.
+  OpenAI labels this reward-hacking category rare but high severity.
+- [METR's Claude 3.7 evaluation](https://metr.org/evaluations/claude-3-7-report/)
+  documents a software-engineering run in which the model directly edited a
+  provided tests file to cause all tests to pass.
+- The [2025 Stack Overflow Developer Survey](https://survey.stackoverflow.co/2025/ai)
+  found that 46% of respondents distrusted the accuracy of AI tools, compared
+  with 33% who trusted them; only 3.1% reported high trust.
+- [DORA's analysis of AI-assisted development](https://dora.dev/insights/balancing-ai-tensions/)
+  calls time saved writing and then re-spent auditing a verification tax. It
+  reports that 30% of developers had little or no trust in AI-generated code.
+- A SWE-bench correctness study,
+  [*Are "Solved Issues" in SWE-bench Really Solved Correctly?*](https://arxiv.org/html/2503.15223v1),
+  found that 7.8% of evaluated plausible patches were counted correct by
+  narrower validation while failing the full developer-written test suite. It
+  also found behavioral discrepancies in 29.6% of plausible patches compared
+  with the human patch.
+
+The research describes two related problems: verification is expensive, and
+the evidence used for verification can itself be weak or manipulated. Gate is
+an outcome-control layer for that gap. It does not try to infer whether an
+agent intended to cheat; it makes the same deterministic decision either way.
+
+## How the idea became Gate
+
+Gate began with one question:
+
+> Why should the agent that performed the work also decide whether the work is
+> finished?
+
+The first design rule was simple: a completion claim must trigger verification,
+not end it. The initial fixture made that rule concrete. A ticket asks for
+`parse_duration("90m")` to work. The obvious parser fix makes targeted tests
+green but silently violates a billing invariant in another module. Gate runs
+the full verifier, catches the regression, and returns the real failure to the
+same Codex thread.
+
+Red-teaming exposed a more serious hole: an agent could delete the failing test
+and receive a green result. That attack became a product requirement rather
+than a hidden caveat. Gate freezes trusted test and verifier inputs before the
+agent starts, reports protected changes as `TAMPERED`, restores the baseline,
+and makes the agent continue from the evidence.
+
+That evolution produced Gate's three-beat proof:
+
+```text
+false completion claim -> FALSIFIED
+trusted test deletion  -> TAMPERED
+correct implementation -> VERIFIED
+```
+
+The scripted fixture makes this sequence repeatable. The source edits, test
+deletion, verifier processes, verdicts, restoration, retries, and audit hashes
+are real. A separate live run demonstrates the same core with a real Codex
+agent and a real open-source project.
+
+## What Gate changes
+
+| Without Gate | With Gate |
+|---|---|
+| Agent says "done" | "Done" triggers verification |
+| Agent chooses a convenient test command | Gate runs the configured full verifier |
+| Tests and verifier inputs can change unnoticed | Protected inputs are frozen, checked, and restored |
+| Green output is accepted at face value | The verifier uses a trusted absolute interpreter and isolated mode |
+| A retry may lose the original failure context | Evidence resumes the exact child Codex thread |
+| The result is a chat message | The result includes `FINAL`, `AUDIT_LOG`, and `AUDIT_ROOT` |
+
+Gate deliberately separates generation from acceptance:
+
+```text
+task -> coding agent -> completion claim
+                     -> protected-input check
+                     -> Gate-controlled verifier
+                     -> FALSIFIED / TAMPERED / VERIFIED
+                     -> exact-thread retry with evidence
+                     -> independently checkable audit chain
+```
+
+The standalone CLI provides the enforcement engine. The Codex plugin makes the
+same enforcement core available through `$gate:doctor`, `$gate:run`, and
+`$gate:audit`. The plugin is an adoption layer, not a second or weaker verifier.
+
+## What success means
+
+Gate does not claim to make software 100% correct. A weak or incomplete test
+suite remains a weak oracle, and `VERIFIED` means only that the protected,
+configured verifier passed for the claimed task.
+
+Gate succeeds when completion becomes falsifiable and reproducible:
+
+- an agent cannot earn success from its own prose;
+- narrow green tests cannot stand in for the configured full verifier;
+- protected-test tampering becomes visible and recoverable;
+- failures return as concrete evidence instead of another vague prompt; and
+- a reviewer can validate the resulting audit chain without trusting the
+  original chat transcript.
+
+For individual developers, this reduces repetitive "did it really run?" work.
+For teams, it creates a reviewable boundary between AI-generated changes and
+the checks allowed to accept them. For CI, security, and compliance workflows,
+it produces a portable decision record while preserving the requirement for
+human review and strong acceptance tests.
 
 ## OpenAI Build Week submission
 
 - Devpost: https://devpost.com/software/gate-0lypv2
-- Current deterministic-fixture demo: https://youtu.be/kGGdz649zCQ
+- Public live real-project demo: https://youtu.be/njgvvLapxs0
+- Deterministic adversarial-fixture demo: https://youtu.be/kGGdz649zCQ
 - Live real-project video: [`docs/video/gate-real-project-live.mp4`](docs/video/gate-real-project-live.mp4)
 - Video timeline and integrity: [`docs/video/README.md`](docs/video/README.md)
 - Real-project recording procedure: [`docs/demo/README.md`](docs/demo/README.md)
@@ -55,9 +185,12 @@ core and produce the same verdicts and audit-chain format.
 | **Codex plugin** | Developers working inside Codex who want named commands and automatic external state paths | `$gate:doctor`, `$gate:run`, `$gate:audit` |
 | **Standalone CLI** | CI, shell automation, security review, and environments that do not install Codex plugins | `python gate.py --repo ... --task ...` |
 
-The plugin is a convenience and adoption layer, not a second verifier. It
-delegates security-sensitive work to the bundled standalone core. Use either
-interface for a run; do not launch both against the same working tree at once.
+The plugin is a convenience and adoption layer, not a second verifier. The
+installer packages an allowlisted copy of the same `gate.py` and `gatelib/`
+enforcement core used by the standalone CLI. This keeps plugin execution
+outside the target repository without reducing Gate's verification behavior.
+Use either interface for a run; do not launch both against the same working
+tree at once.
 
 ## Standalone CLI
 
@@ -145,11 +278,10 @@ same Gate core is installable and usable from an active developer project.
 
 ## License and attribution
 
-Gate is licensed under **GPL-3.0-or-later**, replacing the earlier MIT license
-for releases from this commit forward. When distributing Gate or a derivative,
-preserve the copyright and attribution notices, include the license, mark
-changes, and provide corresponding source as required by GPLv3. See
-[`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Gate is licensed under **GPL-3.0-or-later**. When distributing Gate or a
+derivative, preserve the copyright and attribution notices, include the
+license, mark changes, and provide corresponding source as required by GPLv3.
+See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 `NOTICE` applies a reasonable author-attribution preservation term under
 GPLv3 section 7(b) to redistributed copies and derivatives.
@@ -158,10 +290,6 @@ The license does not require someone who only runs an unmodified private copy
 to publish a credit statement. The redistribution obligations provide the
 enforceable credit and source-preservation behavior intended for downstream
 copies and forks.
-
-Copies already received under the repository's earlier MIT license retain
-that existing grant; release `0.2.0` and later are distributed under the GPL
-terms above.
 
 ## Real-project recording demo
 
@@ -179,6 +307,8 @@ control run, plugin installation, live `$gate:run`, exact verified child, audit
 validation, and the final before/after comparison. Its full transcripts and
 audit are under
 [`docs/evidence/real_project_video`](docs/evidence/real_project_video/README.md).
+The same recording is [public on YouTube](https://youtu.be/njgvvLapxs0) for
+judges who do not want to download the checked-in MP4.
 
 The live recording uses two clean clones of the same pinned project:
 

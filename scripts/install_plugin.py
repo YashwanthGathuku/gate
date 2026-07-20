@@ -77,21 +77,25 @@ def copy_plugin(source: Path, destination: Path) -> None:
     if target == source_root or target.is_relative_to(source_root):
         raise InstallError("plugin destination must be outside the source checkout")
 
-    _remove_existing(target)
-    target.mkdir(parents=True, exist_ok=False)
-    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
+    package_items: list[tuple[str, Path]] = []
     for name in PACKAGE_ENTRIES:
         item = source_root / name
         if not item.exists():
             raise InstallError(f"plugin package is missing required entry: {name}")
         _reject_package_symlinks(item)
+        if not item.is_dir() and not item.is_file():
+            raise InstallError(f"unsupported plugin package entry: {item}")
+        package_items.append((name, item))
+
+    _remove_existing(target)
+    target.mkdir(parents=True, exist_ok=False)
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
+    for name, item in package_items:
         installed = target / name
         if item.is_dir():
             shutil.copytree(item, installed, ignore=ignore)
-        elif item.is_file():
-            shutil.copy2(item, installed)
         else:
-            raise InstallError(f"unsupported plugin package entry: {item}")
+            shutil.copy2(item, installed)
 
 
 def _default_marketplace(name: str) -> dict:
@@ -197,12 +201,13 @@ def main(
         source = args.source.expanduser().resolve(strict=True)
         destination = home / "plugins" / "gate"
         marketplace = home / ".agents" / "plugins" / "marketplace.json"
-        copy_plugin(source, destination)
-        update_marketplace(marketplace, plugin_path=destination)
-
         codex_value = which("codex")
         if codex_value is None:
             raise InstallError("Codex CLI was not found on PATH")
+
+        copy_plugin(source, destination)
+        update_marketplace(marketplace, plugin_path=destination)
+
         print(f"GATE_PLUGIN_SOURCE {source}")
         print(f"GATE_PLUGIN_INSTALLED {destination}")
         print(f"GATE_PLUGIN_MARKETPLACE {marketplace}")

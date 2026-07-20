@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -37,7 +38,7 @@ def test_manifest_identifies_gate_and_only_bundles_skills():
     manifest = load_manifest()
 
     assert manifest["name"] == "gate"
-    assert manifest["version"] == "0.2.0"
+    assert manifest["version"] == "0.2.1"
     assert manifest["skills"] == "./skills/"
     assert manifest["license"] == "GPL-3.0-or-later"
     assert {"hooks", "mcpServers", "apps"}.isdisjoint(manifest)
@@ -225,6 +226,38 @@ def test_copy_plugin_rejects_source_without_gate_manifest(tmp_path):
         copy_plugin(source, tmp_path / "plugins" / "gate")
 
 
+def test_copy_plugin_preserves_existing_install_when_source_is_incomplete(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    for name in (
+        ".codex-plugin",
+        "skills",
+        "scripts",
+        "assets",
+        "gate.py",
+        "gatelib",
+        "verify_chain.py",
+        "LICENSE",
+        "README.md",
+    ):
+        original = ROOT / name
+        destination = source / name
+        if original.is_dir():
+            shutil.copytree(original, destination)
+        else:
+            shutil.copy2(original, destination)
+
+    installed = tmp_path / "home" / "plugins" / "gate"
+    installed.mkdir(parents=True)
+    marker = installed / "working-install.txt"
+    marker.write_text("preserve", encoding="utf-8")
+
+    with pytest.raises(InstallError, match="NOTICE"):
+        copy_plugin(source, installed)
+
+    assert marker.read_text(encoding="utf-8") == "preserve"
+
+
 def test_update_marketplace_preserves_unrelated_plugins_and_top_level_keys(tmp_path):
     path = tmp_path / ".agents" / "plugins" / "marketplace.json"
     other = {
@@ -306,6 +339,19 @@ def test_installer_invokes_codex_plugin_add_with_argv(tmp_path):
     assert marketplace["plugins"][0]["name"] == "gate"
 
 
+def test_installer_missing_codex_does_not_change_plugin_state(tmp_path):
+    home = tmp_path / "home"
+
+    result = install_main(
+        ["--source", str(ROOT), "--home", str(home)],
+        which=lambda name: None,
+    )
+
+    assert result == 2
+    assert not (home / "plugins" / "gate").exists()
+    assert not (home / ".agents" / "plugins" / "marketplace.json").exists()
+
+
 def test_readme_documents_complete_plugin_workflow_and_platform_boundary():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -326,6 +372,29 @@ def test_readme_documents_complete_plugin_workflow_and_platform_boundary():
         "GPL-3.0-or-later",
     ):
         assert required in readme
+
+
+def test_readme_leads_with_verified_problem_and_single_core_architecture():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for required in (
+        'Codex says "done." Gate checks whether that is true.',
+        "https://openai.com/index/how-we-monitor-internal-coding-agents-misalignment/",
+        "https://metr.org/evaluations/claude-3-7-report/",
+        "https://survey.stackoverflow.co/2025/ai",
+        "https://dora.dev/insights/balancing-ai-tensions/",
+        "https://arxiv.org/html/2503.15223v1",
+        "https://youtu.be/njgvvLapxs0",
+        "| Without Gate | With Gate |",
+        "same enforcement core",
+        "allowlisted copy",
+        "Gate succeeds when completion becomes falsifiable and reproducible",
+        "docs/video/gate-real-project-live.mp4",
+        "GPL-3.0-or-later",
+    ):
+        assert required in readme
+
+    assert "MIT" not in readme
 
 
 def test_real_project_demo_documents_both_interfaces_and_honesty_boundaries():
@@ -350,6 +419,12 @@ def test_plugin_evidence_records_validation_installation_and_fresh_skill_run():
 
     validation = (evidence / "plugin_validation.txt").read_text(encoding="utf-8")
     installation = (evidence / "plugin_install.txt").read_text(encoding="utf-8")
+    release_installation = (evidence / "plugin_0_2_1_install.txt").read_text(
+        encoding="utf-8"
+    )
+    publication = (evidence / "submission_publication.txt").read_text(
+        encoding="utf-8"
+    )
     skill_audit = (evidence / "plugin_skill_audit.txt").read_text(
         encoding="utf-8"
     )
@@ -362,6 +437,10 @@ def test_plugin_evidence_records_validation_installation_and_fresh_skill_run():
     assert "installed: true" in installation
     assert "enabled: true" in installation
     assert "DOCTOR_EXIT 2" in installation
+    assert "version: 0.2.1" in release_installation
+    assert "GATE_DOCTOR_OK" in release_installation
+    assert "Visibility: Public" in publication
+    assert "Primary video after read-back: https://youtu.be/njgvvLapxs0" in publication
     assert "Thread: 019f80bd-68ce-7452-b995-a3f708981852" in skill_audit
     assert "Validator exit code: 0" in skill_audit
     assert "1 failed, 49 passed" in real_demo
@@ -372,3 +451,7 @@ def test_plugin_evidence_records_validation_installation_and_fresh_skill_run():
     )
     assert expected_root in installation
     assert expected_root in skill_audit
+    assert (
+        "5241d2d1e9ea87699c52333d7b8c16db8b6bbda961e9921c831992cb178c186b"
+        in release_installation
+    )

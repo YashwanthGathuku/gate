@@ -6,6 +6,8 @@ recording is a real desktop capture of two authenticated Codex runs against
 separate clean clones of `pytest-dev/iniconfig`, pinned to
 `77db208ab4ae0cd2061d909fe222a1db72867850`.
 
+Public YouTube video: https://youtu.be/njgvvLapxs0
+
 The task and human-authored acceptance test are demonstration inputs, not an
 upstream issue or contribution. Both clones began at `1 failed, 49 passed`.
 

@@ -1,0 +1,23 @@
+Gate v2 public submission publication
+Date: 2026-07-20
+
+YouTube:
+URL: https://youtu.be/njgvvLapxs0
+Title: Gate v2: Codex Says Done. Gate Verifies It. | Live Project Demo
+Visibility: Public
+Duration: 2:55
+Copyright checks: complete, no issues found
+Public oEmbed lookup: succeeded with the exact title and channel
+
+Devpost:
+URL: https://devpost.com/software/gate-0lypv2
+Project ID: 1356174
+Version after update: 4
+State after read-back: published
+Hackathon after read-back: OpenAI Build Week
+Primary video after read-back: https://youtu.be/njgvvLapxs0
+
+The Devpost description leads with the documented verification problem,
+compares the ordinary Codex and installed-plugin runs, links the public source
+evidence, explains the shared plugin/CLI core, preserves the product limits,
+and states the warning-recorded thread-resume fallback accurately.
