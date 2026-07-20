@@ -24,11 +24,17 @@ The earlier permanent transcript comparison remains under
 [`docs/evidence/real_project_demo`](../evidence/real_project_demo/README.md).
 All runs began from the same `1 failed, 49 passed` baseline.
 
+The current 2:55 live capture contains these two workflows:
+
 | Workflow | Result | What the developer receives |
 |---|---|---|
-| Ordinary Codex without Gate | 50 tests passed | Agent output and a working-tree diff, but no independent verdict or audit |
-| Original Gate CLI | `FINAL VERIFIED`, 51 tests passed | Protected verification plus a four-record audit chain |
-| Gate Codex plugin | `FINAL VERIFIED`, 50 tests passed | The same protected core through `$gate:run`, plus `$gate:audit` |
+| Ordinary Codex without Gate | 51 tests passed | Agent output and a working-tree diff, but no independent verdict or audit |
+| Gate Codex plugin | `FINAL VERIFIED`, 50 tests passed | The protected core through `$gate:run`, plus a valid audit chain |
+
+The separately captured standalone CLI evidence reports `FINAL VERIFIED`, 51
+tests passed, and a valid four-record chain. It is retained under
+[`docs/evidence/real_project_demo`](../evidence/real_project_demo/README.md) and
+uses the same Gate core as the plugin.
 
 The implementations are all correct. The comparison demonstrates Gate's real
 job: deciding whether a completion claim is supported by protected evidence
@@ -154,7 +160,7 @@ Both paths execute the same Gate core. The plugin adds discoverability and
 external-state setup; it does not redefine verdicts or weaken the standalone
 CLI contract.
 
-## Two-minute recording
+## Alternative three-mode recording plan
 
 1. **Before Gate, 20 seconds.** Show the pinned iniconfig project, failing
    acceptance test, then the completed ordinary Codex run. Point out that 50

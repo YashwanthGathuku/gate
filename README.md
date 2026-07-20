@@ -180,13 +180,16 @@ validation, and the final before/after comparison. Its full transcripts and
 audit are under
 [`docs/evidence/real_project_video`](docs/evidence/real_project_video/README.md).
 
-The captured comparison uses three clean clones of the same pinned project:
+The live recording uses two clean clones of the same pinned project:
 
 | Mode | Independent result | Verification evidence |
 |---|---:|---|
-| Ordinary Codex without Gate | 50 passed | No Gate verdict, audit log, or root |
-| Standalone Gate CLI | 51 passed | `FINAL VERIFIED` plus independently valid SHA-256 chain |
+| Ordinary Codex without Gate | 51 passed | No Gate verdict, audit log, or root |
 | Installed Gate plugin | 50 passed | `$gate:run` verified, then `$gate:audit` validated the chain |
+
+The original standalone CLI was exercised separately against a third clean
+clone. Its `51 passed`, `FINAL VERIFIED`, and independently valid chain are in
+[`docs/evidence/real_project_demo`](docs/evidence/real_project_demo/README.md).
 
 Ordinary Codex solved the task. Gate's demonstrated value is the protected,
 independent completion decision and portable audit record, not a claim that it
