@@ -1,0 +1,35 @@
+{
+  "name": "gate",
+  "version": "0.1.0",
+  "description": "Protected verification and retry for Codex coding tasks.",
+  "author": {
+    "name": "Yashwanth Gathuku"
+  },
+  "homepage": "https://devpost.com/software/gate-0lypv2",
+  "repository": "https://github.com/YashwanthGathuku/gate",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "verification",
+    "testing",
+    "security"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Gate",
+    "shortDescription": "Make coding agents earn completion.",
+    "longDescription": "Run Codex through protected verification, exact-thread retries, and tamper-evident audit records.",
+    "developerName": "Yashwanth Gathuku",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Execute"
+    ],
+    "websiteURL": "https://devpost.com/software/gate-0lypv2",
+    "brandColor": "#14B86E",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "defaultPrompt": "Run this coding task through Gate and report the exact verdict and audit root."
+  }
+}
