@@ -187,6 +187,9 @@ ALLOWED_OCCURRENCES = {
         (124, "forwards to the canonical `theustad@personal` installation. `<upper>_STATE_HOME`"),
         (125, "and `<upper>_PYTHON` are accepted only when their `THEUSTAD_*` equivalents are"),
     ),
+    "fake_codex.py": exact_lines(
+        (17, 'LEGACY_STATE_FILE = ".<lower>_fake_codex_state.json"'),
+    ),
     legacy("<lower>.py"): exact_lines(
         (2, '"""Deprecated <display> entry point forwarding to TheUstad."""'),
         (10, "<display>Result = TheUstadResult"),
