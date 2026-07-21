@@ -31,16 +31,9 @@ def test_extract_records_rejects_incomplete_protocol_output():
         extract_records("ROUND 1 VERIFIED\n")
 
 
-def test_output_directory_must_not_be_legacy_evidence(tmp_path):
-    with pytest.raises(ValueError, match="legacy evidence"):
-        validate_output_dir(ROOT / "docs" / "evidence" / "real_project_demo")
-
-
-def test_output_directory_rejects_descendant_of_legacy_evidence():
-    with pytest.raises(ValueError, match="legacy evidence"):
-        validate_output_dir(
-            ROOT / "docs" / "evidence" / "real_project_video" / "new"
-        )
+def test_output_directory_is_resolved(tmp_path):
+    output = tmp_path / "evidence"
+    assert validate_output_dir(output) == output.resolve()
 
 
 def test_failed_property_makes_summary_and_process_nonzero(tmp_path):

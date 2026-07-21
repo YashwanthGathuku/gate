@@ -7,6 +7,6 @@ Implement `__len__` for both public collection wrappers:
 
 Keep existing iteration, lookup, ordering, parsing, and error behavior
 unchanged. The human-authored acceptance test is
-`testing/test_gate_demo_acceptance.py`; do not modify or delete it. Add or
+`testing/test_theustad_demo_acceptance.py`; do not modify or delete it. Add or
 adjust other project tests only when useful. Run the complete pytest suite and
 claim completion only when the implementation and full suite are both clean.

@@ -165,5 +165,5 @@ def test_recorded_schema_samples_are_supported():
         text
         for event in parsed
         if (text := events.extract_agent_text(event)) is not None
-    ] == ["GATE_SCHEMA_PING"]
+    ] == ["THEUSTAD_SCHEMA_PING"]
     assert all(events.describe(event) for event in parsed)

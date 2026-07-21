@@ -110,17 +110,3 @@ Remove it with:
 ```bash
 codex plugin remove theustad@personal --json
 ```
-
-## Gate migration and history
-
-Gate-named commands are deprecated migration adapters through TheUstad 1.x.
-Existing automation may temporarily use `gate.py`, `gatelib`, `GATE_STATE_HOME`,
-`GATE_PYTHON`, `gate@personal`, and `$gate:*`; all new commands use TheUstad.
-To retain the adapter during a transition, run:
-
-```bash
-"$THEUSTAD_PYTHON" scripts/install_plugin.py --install-legacy-alias
-```
-
-The adapter forwards to the canonical runtime, contains no second verifier, and
-is scheduled for removal in 2.0.

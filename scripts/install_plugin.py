@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install TheUstad and any required Gate compatibility alias."""
+"""Install TheUstad into the personal Codex plugin marketplace."""
 
 from __future__ import annotations
 
@@ -29,9 +29,6 @@ PACKAGE_ENTRIES = (
     "NOTICE",
     "README.md",
 )
-LEGACY_PLUGIN_NAME = "gate"
-LEGACY_PLUGIN_ID = "gate@personal"
-LEGACY_PACKAGE_ENTRIES = (".codex-plugin", "skills", "scripts")
 ProcessRunner = Callable[[list[str], Path | None], int]
 Which = Callable[[str], str | None]
 
@@ -118,15 +115,6 @@ def copy_plugin(source: Path, destination: Path) -> None:
     )
 
 
-def install_legacy_adapter(source: Path, destination: Path) -> None:
-    _copy_package(
-        source,
-        destination,
-        plugin_name=LEGACY_PLUGIN_NAME,
-        entries=LEGACY_PACKAGE_ENTRIES,
-    )
-
-
 def _default_marketplace(name: str) -> dict:
     return {
         "name": name,
@@ -156,19 +144,6 @@ def _load_marketplace(path: Path, marketplace_name: str) -> dict:
     if not isinstance(plugins, list):
         raise InstallError("marketplace.json field 'plugins' must be an array")
     return payload
-
-
-def _marketplace_has_plugin(
-    path: Path,
-    plugin_name: str,
-    marketplace_name: str = "personal",
-) -> bool:
-    marketplace_path = _resolve_parent_only(path)
-    payload = _load_marketplace(marketplace_path, marketplace_name)
-    return any(
-        isinstance(entry, dict) and entry.get("name") == plugin_name
-        for entry in payload["plugins"]
-    )
 
 
 def update_marketplace(
@@ -237,11 +212,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--source", type=Path, default=PLUGIN_ROOT)
     parser.add_argument("--home", type=Path, default=Path.home())
-    parser.add_argument(
-        "--install-legacy-alias",
-        action="store_true",
-        help="also install the deprecated gate@personal forwarding package",
-    )
     return parser
 
 
@@ -256,17 +226,10 @@ def main(
         home = args.home.expanduser().resolve(strict=False)
         source = args.source.expanduser().resolve(strict=True)
         destination = home / "plugins" / PLUGIN_NAME
-        legacy_destination = home / "plugins" / LEGACY_PLUGIN_NAME
         marketplace = home / ".agents" / "plugins" / "marketplace.json"
         codex_value = which("codex")
         if codex_value is None:
             raise InstallError("Codex CLI was not found on PATH")
-        install_legacy = (
-            args.install_legacy_alias
-            or legacy_destination.exists()
-            or legacy_destination.is_symlink()
-            or _marketplace_has_plugin(marketplace, LEGACY_PLUGIN_NAME)
-        )
 
         copy_plugin(source, destination)
         update_marketplace(
@@ -278,22 +241,8 @@ def main(
         print(f"THEUSTAD_PLUGIN_SOURCE {source}")
         print(f"THEUSTAD_PLUGIN_INSTALLED {destination}")
         print(f"THEUSTAD_PLUGIN_MARKETPLACE {marketplace}")
-        result = process_runner(
-            [codex_value, "plugin", "add", PLUGIN_ID, "--json"],
-            home,
-        )
-        if result != 0 or not install_legacy:
-            return result
-
-        install_legacy_adapter(source / "compat" / "gate-plugin", legacy_destination)
-        update_marketplace(
-            marketplace,
-            plugin_name=LEGACY_PLUGIN_NAME,
-            plugin_path=legacy_destination,
-        )
-        print(f"GATE_PLUGIN_COMPAT_INSTALLED {legacy_destination}")
         return process_runner(
-            [codex_value, "plugin", "add", LEGACY_PLUGIN_ID, "--json"],
+            [codex_value, "plugin", "add", PLUGIN_ID, "--json"],
             home,
         )
     except (InstallError, OSError) as error:

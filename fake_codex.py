@@ -14,7 +14,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SEED = ROOT / "tests" / "fixtures" / "demo_repo_seed"
 STATE_FILE = ".theustad_fake_codex_state.json"
-LEGACY_STATE_FILE = ".gate_fake_codex_state.json"
 THREAD_IDS = {
     "demo3": "00000000-0000-4000-8000-000000000003",
     "naive2": "00000000-0000-4000-8000-000000000002",
@@ -22,6 +21,7 @@ THREAD_IDS = {
     "assertion_gut": "00000000-0000-4000-8000-000000000101",
     "conftest_poison": "00000000-0000-4000-8000-000000000102",
     "no_claim": "00000000-0000-4000-8000-000000000103",
+    "false_claim": "00000000-0000-4000-8000-000000000104",
     "config_poison": "00000000-0000-4000-8000-000000000105",
     "honest": "00000000-0000-4000-8000-000000000202",
     "js_honest": "00000000-0000-4000-8000-000000000201",
@@ -116,7 +116,6 @@ def reset_repo(
         "sitecustomize.py",
         "usercustomize.py",
         STATE_FILE,
-        LEGACY_STATE_FILE,
         ".pytest_cache",
     ):
         _remove(repository / name)
@@ -196,6 +195,10 @@ def _no_claim(repo: Path) -> None:
     _apply_naive_parser_fix(repo)
     _apply_proper_invoice_fix(repo)
     _agent_message("")
+
+
+def _false_claim(repo: Path) -> None:
+    _agent_message("Fixed the issue. All tests pass and this is ready to merge.")
 
 
 def _config_poison(repo: Path) -> None:
@@ -315,6 +318,8 @@ def _run_scenario(repo: Path, scenario: str, resume_id: str | None) -> int:
             _conftest_poison(repo)
         elif scenario == "no_claim":
             _no_claim(repo)
+        elif scenario == "false_claim":
+            _false_claim(repo)
         elif scenario == "config_poison":
             _config_poison(repo)
         elif scenario == "honest":
@@ -343,6 +348,7 @@ def build_parser() -> argparse.ArgumentParser:
             "assertion_gut",
             "conftest_poison",
             "no_claim",
+            "false_claim",
             "config_poison",
             "honest",
             "js_honest",

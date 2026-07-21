@@ -15,7 +15,7 @@ system user, kernel compromise, or malicious human controlling both
 TheUstad and the machine.
 
 Author: Yashwanth Gathuku. The claim lexicon and verification rules
-derive from his `evidence-gate` agent-discipline work. Any public
+derive from his evidence-discipline work. Any public
 lineage claim in the submission must include a dated, working link.
 
 ---
@@ -110,21 +110,14 @@ theustad/
 ├── demo_repo/
 ├── task.md
 ├── docs/
-│   ├── SPEC.md
-│   ├── PROMPTS.md
-│   └── RUNBOOK.md
+│   └── SPEC.md
 └── README.md
 ```
 
-### 3.1 TheUstad 1.x compatibility boundary
+### 3.1 TheUstad naming boundary
 
-Gate-named entry points are deprecated adapters through TheUstad 1.x and are
-scheduled for removal in 2.0. `gate.py` forwards to `theustad.py`, `gatelib`
-forwards to `theustadlib`, and the optional `compat/gate-plugin/` package
-forwards to the canonical `theustad@personal` installation. `GATE_STATE_HOME`
-and `GATE_PYTHON` are accepted only when their `THEUSTAD_*` equivalents are
-absent; canonical variables take precedence. These adapters contain no second
-runtime implementation or security logic.
+Only canonical TheUstad entry points, package names, environment variables, and
+plugin commands are supported.
 
 ## 4. Module contracts
 

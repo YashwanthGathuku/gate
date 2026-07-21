@@ -107,14 +107,10 @@ def default_state_home(
     *,
     environ: Mapping[str, str] | None = None,
     home: Path | None = None,
-    warning: Callable[[str], None] = print,
 ) -> Path:
     values = os.environ if environ is None else environ
     if values.get("THEUSTAD_STATE_HOME"):
         root = Path(values["THEUSTAD_STATE_HOME"])
-    elif values.get("GATE_STATE_HOME"):
-        warning("GATE_DEPRECATED use THEUSTAD_STATE_HOME")
-        root = Path(values["GATE_STATE_HOME"])
     elif values.get("XDG_STATE_HOME"):
         root = Path(values["XDG_STATE_HOME"]) / "theustad"
     else:

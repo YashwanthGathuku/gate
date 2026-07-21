@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 import scripts.build_plugin_assets as plugin_assets
-import scripts.install_plugin as plugin_installer
 from scripts.build_plugin_assets import build_assets
 from scripts.install_plugin import (
     InstallError,
@@ -58,7 +57,7 @@ def test_manifest_metadata_and_asset_paths_exist():
         "and audit root."
     )
     assert manifest["repository"] == "https://github.com/YashwanthGathuku/theustad"
-    assert manifest["homepage"] == "https://devpost.com/software/gate-0lypv2"
+    assert manifest["homepage"] == "https://github.com/YashwanthGathuku/theustad"
     for field in ("composerIcon", "logo"):
         value = interface[field]
         assert value.startswith("./assets/")
@@ -113,7 +112,6 @@ def test_notice_identifies_theustad_and_preserves_required_attribution():
 
     for required in (
         "TheUstad 1.0 - originally developed by Yashwanth Gathuku",
-        "Formerly released as Gate v2",
         "https://github.com/YashwanthGathuku/theustad",
         "GPLv3 section 7(b)",
     ):
@@ -313,32 +311,6 @@ def test_update_marketplace_preserves_unrelated_plugins_and_top_level_keys(tmp_p
     assert theustad["policy"]["installation"] == "AVAILABLE"
 
 
-def test_update_marketplace_replaces_gate_in_place(tmp_path):
-    path = tmp_path / ".agents" / "plugins" / "marketplace.json"
-    write_marketplace(
-        path,
-        [
-            {"name": "before"},
-            {"name": "gate", "source": {"source": "local", "path": "old"}},
-            {"name": "after"},
-        ],
-    )
-
-    update_marketplace(
-        path,
-        plugin_name="gate",
-        plugin_path=tmp_path / "plugins" / "gate",
-    )
-
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    assert [entry["name"] for entry in payload["plugins"]] == [
-        "before",
-        "gate",
-        "after",
-    ]
-    assert payload["plugins"][1]["source"]["path"] == "./plugins/gate"
-
-
 def test_update_marketplace_rejects_symlinked_manifest(tmp_path, monkeypatch):
     path = tmp_path / ".agents" / "plugins" / "marketplace.json"
     plugin_path = tmp_path / "plugins" / "theustad"
@@ -388,165 +360,10 @@ def test_installer_invokes_codex_plugin_add_with_argv(tmp_path):
         )
     ]
     assert (home / "plugins" / "theustad" / "theustad.py").is_file()
-    assert not (home / "plugins" / "gate").exists()
     marketplace = json.loads(
         (home / ".agents" / "plugins" / "marketplace.json").read_text()
     )
     assert marketplace["plugins"][0]["name"] == "theustad"
-
-
-def test_installer_upgrades_existing_gate_to_forwarding_package(tmp_path):
-    home = tmp_path / "home"
-    legacy = home / "plugins" / "gate"
-    legacy.mkdir(parents=True)
-    (legacy / "old-runtime.py").write_text("duplicate", encoding="utf-8")
-    calls = []
-
-    result = install_main(
-        ["--source", str(ROOT), "--home", str(home)],
-        process_runner=lambda argv, cwd: calls.append((argv, cwd)) or 0,
-        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
-    )
-
-    assert result == 0
-    assert calls == [
-        (["/usr/bin/codex", "plugin", "add", "theustad@personal", "--json"], home),
-        (["/usr/bin/codex", "plugin", "add", "gate@personal", "--json"], home),
-    ]
-    assert {path.relative_to(legacy).as_posix() for path in legacy.rglob("*")} == {
-        ".codex-plugin",
-        ".codex-plugin/plugin.json",
-        "skills",
-        "skills/audit",
-        "skills/audit/SKILL.md",
-        "skills/doctor",
-        "skills/doctor/SKILL.md",
-        "skills/run",
-        "skills/run/SKILL.md",
-        "scripts",
-        "scripts/gate_plugin.py",
-    }
-    assert (home / "plugins" / "theustad" / "theustadlib").is_dir()
-    assert not (legacy / "gatelib").exists()
-    assert not (legacy / "theustadlib").exists()
-
-
-def test_installer_marketplace_gate_entry_triggers_upgrade_and_preserves_slot(tmp_path):
-    home = tmp_path / "home"
-    marketplace = home / ".agents" / "plugins" / "marketplace.json"
-    write_marketplace(
-        marketplace,
-        [{"name": "before"}, {"name": "gate"}, {"name": "after"}],
-    )
-
-    result = install_main(
-        ["--source", str(ROOT), "--home", str(home)],
-        process_runner=lambda argv, cwd: 0,
-        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
-    )
-
-    assert result == 0
-    payload = json.loads(marketplace.read_text(encoding="utf-8"))
-    assert payload["custom"] == {"preserve": True}
-    assert [entry["name"] for entry in payload["plugins"]] == [
-        "before",
-        "gate",
-        "after",
-        "theustad",
-    ]
-    assert (home / "plugins" / "gate" / "scripts" / "gate_plugin.py").is_file()
-
-
-def test_installer_flag_forces_legacy_alias_in_clean_home(tmp_path):
-    home = tmp_path / "home"
-    calls = []
-
-    result = install_main(
-        [
-            "--source",
-            str(ROOT),
-            "--home",
-            str(home),
-            "--install-legacy-alias",
-        ],
-        process_runner=lambda argv, cwd: calls.append((argv, cwd)) or 0,
-        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
-    )
-
-    assert result == 0
-    assert [call[0][-2] for call in calls] == ["theustad@personal", "gate@personal"]
-    assert (home / "plugins" / "gate" / "scripts" / "gate_plugin.py").is_file()
-
-
-def test_install_legacy_adapter_rejects_symlinked_package_entry(tmp_path, monkeypatch):
-    source = ROOT / "compat" / "gate-plugin"
-    symlinked_entry = source / "scripts"
-    original_is_symlink = Path.is_symlink
-
-    def fake_is_symlink(path):
-        if path == symlinked_entry:
-            return True
-        return original_is_symlink(path)
-
-    monkeypatch.setattr(Path, "is_symlink", fake_is_symlink)
-
-    with pytest.raises(InstallError, match="symlink"):
-        plugin_installer.install_legacy_adapter(
-            source, tmp_path / "plugins" / "gate"
-        )
-
-
-def test_legacy_adapter_warns_and_forwards_with_absolute_python(tmp_path, monkeypatch):
-    plugins = tmp_path / "plugins"
-    adapter_source = ROOT / "compat" / "gate-plugin"
-    adapter = plugins / "gate"
-    plugin_installer.install_legacy_adapter(adapter_source, adapter)
-    canonical = plugins / "theustad" / "scripts" / "theustad_plugin.py"
-    canonical.parent.mkdir(parents=True)
-    canonical.write_text("# canonical test launcher\n", encoding="utf-8")
-
-    module_path = adapter / "scripts" / "gate_plugin.py"
-    spec = importlib.util.spec_from_file_location("installed_gate_adapter", module_path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    calls = []
-
-    def fake_run(argv, **kwargs):
-        calls.append((argv, kwargs))
-        return subprocess.CompletedProcess(argv, 7)
-
-    monkeypatch.setattr(module.subprocess, "run", fake_run)
-    monkeypatch.setattr(sys, "argv", [str(module_path), "doctor", "--repo", "space path"])
-
-    assert module.main() == 7
-    assert calls == [
-        (
-            [
-                os.path.abspath(sys.executable),
-                str(canonical),
-                "doctor",
-                "--repo",
-                "space path",
-            ],
-            {"shell": False, "check": False},
-        )
-    ]
-
-
-def test_legacy_adapter_rejects_missing_canonical_launcher(tmp_path, capsys):
-    adapter = tmp_path / "plugins" / "gate"
-    plugin_installer.install_legacy_adapter(ROOT / "compat" / "gate-plugin", adapter)
-    module_path = adapter / "scripts" / "gate_plugin.py"
-    spec = importlib.util.spec_from_file_location("missing_canonical_adapter", module_path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    assert module.main() == 2
-    captured = capsys.readouterr()
-    assert "GATE_DEPRECATED use $theustad:<command>" in captured.err
-    assert "canonical TheUstad plugin launcher is missing" in captured.err
 
 
 def test_installer_missing_codex_does_not_change_plugin_state(tmp_path):
@@ -558,7 +375,7 @@ def test_installer_missing_codex_does_not_change_plugin_state(tmp_path):
     )
 
     assert result == 2
-    assert not (home / "plugins" / "gate").exists()
+    assert not (home / "plugins" / "theustad").exists()
     assert not (home / ".agents" / "plugins" / "marketplace.json").exists()
 
 
@@ -594,12 +411,11 @@ def test_readme_leads_with_verified_problem_and_single_core_architecture():
         "https://survey.stackoverflow.co/2025/ai",
         "https://dora.dev/insights/balancing-ai-tensions/",
         "https://arxiv.org/html/2503.15223v1",
-        "https://youtu.be/njgvvLapxs0",
+        "https://youtu.be/D1nlvLk9iv8",
         "| Without TheUstad | With TheUstad |",
         "same enforcement core",
         "allowlisted copy",
         "TheUstad succeeds when completion becomes falsifiable and reproducible",
-        "Formerly Gate",
         "explicit custom verifier",
         "GPL-3.0-or-later",
     ):
@@ -625,44 +441,18 @@ def test_theustad_demo_documents_both_interfaces_and_honesty_boundaries():
         assert required in demo
 
 
-def test_plugin_evidence_records_validation_installation_and_fresh_skill_run():
-    evidence = ROOT / "docs" / "evidence"
-
-    validation = (evidence / "plugin_validation.txt").read_text(encoding="utf-8")
+def test_current_release_evidence_records_plugin_video_and_publication():
+    evidence = ROOT / "docs" / "evidence" / "theustad-1.0"
     installation = (evidence / "plugin_install.txt").read_text(encoding="utf-8")
-    release_installation = (evidence / "plugin_0_2_1_install.txt").read_text(
-        encoding="utf-8"
-    )
-    publication = (evidence / "submission_publication.txt").read_text(
-        encoding="utf-8"
-    )
-    skill_audit = (evidence / "plugin_skill_audit.txt").read_text(
-        encoding="utf-8"
-    )
-    real_demo = (evidence / "real_project_demo_prep.txt").read_text(
-        encoding="utf-8"
-    )
+    plugin_list = json.loads((evidence / "plugin_list.json").read_text(encoding="utf-8"))
+    publication = (evidence / "publication.txt").read_text(encoding="utf-8")
+    video_hash = (evidence / "video" / "video_sha256.txt").read_text(encoding="utf-8")
 
-    assert "Exit code: 0" in validation
-    assert "Plugin validation passed" in validation
-    assert "installed: true" in installation
-    assert "enabled: true" in installation
-    assert "DOCTOR_EXIT 2" in installation
-    assert "version: 0.2.1" in release_installation
-    assert "GATE_DOCTOR_OK" in release_installation
+    assert "THEUSTAD_PLUGIN_INSTALLED" in installation
+    assert any(
+        plugin["pluginId"] == "theustad@personal"
+        for plugin in plugin_list["output"]["installed"]
+    )
     assert "Visibility: Public" in publication
-    assert "Primary video after read-back: https://youtu.be/njgvvLapxs0" in publication
-    assert "Thread: 019f80bd-68ce-7452-b995-a3f708981852" in skill_audit
-    assert "Validator exit code: 0" in skill_audit
-    assert "1 failed, 49 passed" in real_demo
-    assert "SUPPORTED_GATE_RUN NOT RUN" in real_demo
-
-    expected_root = (
-        "200042504cd90869d2bc8edcd60278049e231ead88ae69a60919a64a335d4a20"
-    )
-    assert expected_root in installation
-    assert expected_root in skill_audit
-    assert (
-        "5241d2d1e9ea87699c52333d7b8c16db8b6bbda961e9921c831992cb178c186b"
-        in release_installation
-    )
+    assert "https://youtu.be/D1nlvLk9iv8" in publication
+    assert "D236FF13EF24A5F1F065F32D1E19158D59AE983C6F0D6C41F993081F62DC1A86" in video_hash

@@ -28,10 +28,6 @@ VERIFY_CHAIN = ROOT / "verify_chain.py"
 TASK = ROOT / "task.md"
 PYTHON_SEED = ROOT / "tests" / "fixtures" / "demo_repo_seed"
 JS_SEED = ROOT / "tests" / "fixtures" / "js_repo_seed"
-LEGACY_EVIDENCE = (
-    ROOT / "docs" / "evidence" / "real_project_demo",
-    ROOT / "docs" / "evidence" / "real_project_video",
-)
 VERDICTS = frozenset(
     {
         "VERIFIED",
@@ -87,12 +83,7 @@ class EvidenceRun:
 
 
 def validate_output_dir(path: Path) -> Path:
-    resolved = Path(path).resolve(strict=False)
-    for legacy in LEGACY_EVIDENCE:
-        old = legacy.resolve(strict=False)
-        if resolved == old or resolved.is_relative_to(old):
-            raise ValueError(f"refusing legacy evidence output path: {resolved}")
-    return resolved
+    return Path(path).resolve(strict=False)
 
 
 def run_command(
@@ -543,7 +534,7 @@ def run_matrix(output_dir: Path) -> int:
             specifications = (
                 ("A1", "assertion_gut", ("TAMPERED",), False, 0, "tests/test_invoice.py"),
                 ("A2", "conftest_poison", ("TAMPERED",), False, 0, "conftest.py"),
-                ("A3", "no_claim", ("PASS_NO_CLAIM",), False, 0, None),
+                ("A3", "false_claim", ("FALSIFIED",), False, 0, None),
                 ("A4", "crash", ("AGENT_ERROR",), False, 0, None),
                 ("A5", "config_poison", ("TAMPERED",), False, 0, "pytest.ini"),
             )

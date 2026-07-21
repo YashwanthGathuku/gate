@@ -86,9 +86,7 @@ $theustad:audit Verify the absolute AUDIT_LOG path printed by the completed TheU
 The parent task launches a separate TheUstad-controlled child. The plugin and
 standalone CLI execute the same core and preserve the same audit contract.
 
-## Historical evidence
+## Evidence
 
-The original recordings, outputs, and SHA-256 evidence are immutable historical
-artifacts. They remain indexed in [the video archive](../video/README.md) and
-[recording evidence](../evidence/real_project_video/README.md). They document
-the prior Gate release and are not current setup instructions.
+The current adversarial matrix, audit chains, plugin installation readback, and
+video integrity records are indexed in [release evidence](../evidence/README.md).

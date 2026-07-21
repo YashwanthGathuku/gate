@@ -13,15 +13,14 @@ def test_demo_scripts_use_canonical_names_and_mode_contracts():
     prepare_script = read_script("prepare_wsl_demo.sh")
     cli_script = read_script("run_theustad_cli_wsl.sh")
     plugin_script = read_script("run_theustad_plugin_wsl.sh")
-    no_theustad_script = read_script("run_no_gate_wsl.sh")
+    control_script = read_script("run_control_wsl.sh")
 
     assert "theustad.py" in cli_script
     assert "THEUSTAD_ROOT" in cli_script
     assert "THEUSTAD_STATE_HOME" in plugin_script
     assert "theustad@personal" in plugin_script
     assert "$theustad:run" in plugin_script
-    assert "gate.py" not in no_theustad_script
-    assert "theustad.py" not in no_theustad_script
+    assert "theustad.py" not in control_script
     assert "77db208ab4ae0cd2061d909fe222a1db72867850" in prepare_script
 
 
@@ -30,7 +29,7 @@ def test_subprocess_scripts_are_fail_closed_and_capture_execution_metadata():
         "prepare_wsl_demo.sh",
         "run_theustad_cli_wsl.sh",
         "run_theustad_plugin_wsl.sh",
-        "run_no_gate_wsl.sh",
+        "run_control_wsl.sh",
     ):
         script = read_script(name)
         assert script.startswith("#!/usr/bin/env bash\nset -euo pipefail\n")
@@ -51,11 +50,10 @@ def test_preparation_records_identical_pinned_inputs_and_baseline_evidence():
     assert "ACCEPTANCE_SHA256" in script
 
 
-def test_ordinary_mode_explicitly_has_no_theustad_or_legacy_launcher():
-    script = read_script("run_no_gate_wsl.sh")
+def test_ordinary_mode_explicitly_has_no_theustad_launcher():
+    script = read_script("run_control_wsl.sh")
 
     assert "TheUstad" in script
-    assert "Gate skill" in script or "Gate launcher" in script
     assert "THEUSTAD_VERDICT NONE" in script
     assert "AUDIT_LOG NONE" in script
     assert "AUDIT_ROOT NONE" in script

@@ -150,23 +150,6 @@ The custom verifier is the acceptance oracle for that run. Protect all inputs
 it needs before starting; protected files are checked before and after
 verification, and changed inputs are restored and reported as `TAMPERED`.
 
-## Upgrade from Gate
-
-**Formerly Gate**, TheUstad is the canonical product and runtime. Gate-named
-entry points are deprecated migration adapters through TheUstad 1.x; they
-forward to the same runtime and contain no second implementation.
-
-Existing users can install the canonical package from the checkout above. To
-retain a legacy adapter temporarily, run:
-
-```bash
-"$THEUSTAD_PYTHON" scripts/install_plugin.py --install-legacy-alias
-```
-
-Use canonical `theustad.py`, `THEUSTAD_*`, `theustad@personal`, and
-`$theustad:*` names for all new work. Gate artifacts below are historical
-evidence and migration references only.
-
 ## Audit verification
 
 Every run reports an `AUDIT_LOG` and `AUDIT_ROOT`. Validate the exact emitted
@@ -181,18 +164,12 @@ release record. TheUstad does not claim signing, HMAC, or remote attestation.
 
 ## Evidence and reproducibility
 
-The current submission, narrated demo, release evidence, and preserved
-historical artifacts are available for review:
+The current submission, narrated demo, and release evidence are available for
+review:
 
-- Devpost history: https://devpost.com/software/gate-0lypv2
 - Current 70-second narrated TheUstad demo and [publication evidence](docs/evidence/theustad-1.0/publication.txt): https://youtu.be/D1nlvLk9iv8
-- Deterministic rehearsal recording: https://youtu.be/kGGdz649zCQ
-- Original public recording: https://youtu.be/njgvvLapxs0
-- Historical video files, digests, and labels: [docs/video/README.md](docs/video/README.md)
-- Permanent audit and recording evidence: [docs/evidence](docs/evidence/README.md)
-
-The anchored rehearsal root is
-`200042504cd90869d2bc8edcd60278049e231ead88ae69a60919a64a335d4a20`.
+- Current video files, digest, and captions: [docs/video/README.md](docs/video/README.md)
+- Reproducible adversarial matrix and audit chains: [docs/evidence](docs/evidence/README.md)
 
 ## Supported platforms
 
@@ -223,6 +200,6 @@ redistributing modified copies.
 
 ## OpenAI Build Week
 
-TheUstad was prepared for OpenAI Build Week. The Build Week submission and
-historical Gate recordings are retained as historical evidence; current setup,
-commands, and release guidance use TheUstad.
+TheUstad was prepared for OpenAI Build Week with Codex and GPT-5.6. The public
+repository, plugin, CLI, narrated demo, and reproducible evidence all use the
+same TheUstad identity and enforcement core.

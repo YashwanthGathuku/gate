@@ -19,7 +19,6 @@ Playback readback: watch page loaded with the exact title, active audio controls
 and visible burned-in English captions.
 
 DEVPOST READBACK
-URL: https://devpost.com/software/gate-0lypv2
 Project ID: 1356174
 Name: TheUstad
 State: published

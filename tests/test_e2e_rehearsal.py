@@ -193,6 +193,14 @@ def test_empty_final_message_is_pass_no_claim_and_not_success(tmp_path):
     assert result.returncode != 0
     assert _verdicts(result.stdout) == ["PASS_NO_CLAIM"]
     assert "FINAL PASS_NO_CLAIM" in result.stdout
+
+
+def test_explicit_false_completion_claim_is_falsified(tmp_path):
+    _, result = _run_scenario(tmp_path, "false_claim", max_retries=0)
+
+    assert result.returncode != 0
+    assert _verdicts(result.stdout) == ["FALSIFIED"]
+    assert "FINAL FALSIFIED" in result.stdout
     _assert_valid_chain(result.stdout)
 
 

@@ -7,7 +7,7 @@ venv_home="${DEMO_VENV_HOME:-$HOME/.local/share/theustad-demo}"
 evidence="${DEMO_EVIDENCE:-$HOME/theustad-demo-evidence}"
 state_home="${THEUSTAD_STATE_HOME:-$HOME/.local/state/theustad-demo}"
 theustad_repo="https://github.com/YashwanthGathuku/theustad.git"
-theustad_branch="Ash/theustad-codex-plugin"
+theustad_branch="master"
 upstream_repo="https://github.com/pytest-dev/iniconfig.git"
 upstream_commit="77db208ab4ae0cd2061d909fe222a1db72867850"
 

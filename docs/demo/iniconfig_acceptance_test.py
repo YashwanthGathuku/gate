@@ -3,7 +3,7 @@ from iniconfig import IniConfig
 
 def test_lengths_report_sections_and_section_entries() -> None:
     config = IniConfig(
-        "gate-demo.ini",
+        "theustad-demo.ini",
         """\
 [alpha]
 first = 1

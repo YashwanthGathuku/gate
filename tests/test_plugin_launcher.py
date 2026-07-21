@@ -67,28 +67,6 @@ def test_theustad_state_home_overrides_xdg_and_default(tmp_path):
     ) == theustad_home.resolve()
 
 
-def test_theustad_state_home_wins_over_legacy_value(tmp_path):
-    current = tmp_path / "current"
-    legacy = tmp_path / "legacy"
-    warnings = []
-
-    assert default_state_home(
-        environ={"THEUSTAD_STATE_HOME": str(current), "GATE_STATE_HOME": str(legacy)},
-        warning=warnings.append,
-    ) == current.resolve()
-    assert warnings == []
-
-
-def test_legacy_state_home_is_accepted_with_warning(tmp_path):
-    legacy = tmp_path / "legacy"
-    warnings = []
-
-    assert default_state_home(
-        environ={"GATE_STATE_HOME": str(legacy)}, warning=warnings.append
-    ) == legacy.resolve()
-    assert warnings == ["GATE_DEPRECATED use THEUSTAD_STATE_HOME"]
-
-
 def test_xdg_state_home_is_used_when_theustad_override_is_absent(tmp_path):
     xdg_home = tmp_path / "xdg"
 

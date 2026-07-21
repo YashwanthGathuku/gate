@@ -17,7 +17,6 @@ def test_readme_uses_canonical_release_links_and_commands():
         "theustad@personal",
         "THEUSTAD_PYTHON",
         "Linux, macOS, or WSL 2",
-        "Formerly Gate",
         "PASS_NO_CLAIM",
         "custom verifier",
         "GPL-3.0-or-later",
@@ -26,11 +25,11 @@ def test_readme_uses_canonical_release_links_and_commands():
         assert value in text
 
 
-def test_current_docs_do_not_recommend_legacy_commands():
+def test_current_docs_use_only_theustad_commands():
     for relative in ("README.md", "docs/PLUGIN_GUIDE.md", "docs/demo/README.md"):
         text = (ROOT / relative).read_text(encoding="utf-8")
-        assert "git clone https://github.com/YashwanthGathuku/gate" not in text
-        assert "codex plugin add gate@personal" not in text
+        assert "git clone https://github.com/YashwanthGathuku/theustad" in text or relative != "README.md"
+        assert "theustad" in text.lower()
 
 
 def test_docs_state_honesty_boundaries():
