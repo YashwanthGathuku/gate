@@ -134,15 +134,28 @@ def test_timeout_returns_124_with_explicit_evidence(tmp_path):
     assert result.warning == "VERIFIER_TIMEOUT after 0.2 seconds"
 
 
-def test_signal_group_tolerates_inaccessible_completed_group(monkeypatch):
+@pytest.mark.parametrize("return_code", [0, None])
+def test_signal_group_only_tolerates_inaccessible_completed_group(
+    monkeypatch, return_code
+):
     verifier = _verifier()
+
+    class Process:
+        pid = 123
+
+        def poll(self):
+            return return_code
 
     def inaccessible_group(*_args):
         raise PermissionError("group is no longer accessible")
 
     monkeypatch.setattr(verifier.os, "killpg", inaccessible_group, raising=False)
 
-    verifier._signal_group(123, 1)
+    if return_code is None:
+        with pytest.raises(PermissionError, match="no longer accessible"):
+            verifier._signal_group(Process(), 1)
+    else:
+        verifier._signal_group(Process(), 1)
 
 
 def test_empty_output_is_exposed_as_a_warning(tmp_path):

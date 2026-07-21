@@ -175,15 +175,28 @@ time.sleep(30)
     assert result.warnings == ("AGENT_TIMEOUT after 0.2 seconds",)
 
 
-def test_signal_group_tolerates_inaccessible_completed_group(monkeypatch):
+@pytest.mark.parametrize("return_code", [0, None])
+def test_signal_group_only_tolerates_inaccessible_completed_group(
+    monkeypatch, return_code
+):
     session = _session_module()
+
+    class Process:
+        pid = 123
+
+        def poll(self):
+            return return_code
 
     def inaccessible_group(*_args):
         raise PermissionError("group is no longer accessible")
 
     monkeypatch.setattr(session.os, "killpg", inaccessible_group, raising=False)
 
-    session._signal_group(123, 1)
+    if return_code is None:
+        with pytest.raises(PermissionError, match="no longer accessible"):
+            session._signal_group(Process(), 1)
+    else:
+        session._signal_group(Process(), 1)
 
 
 def _pid_is_running(pid):

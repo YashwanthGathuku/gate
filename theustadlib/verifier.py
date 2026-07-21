@@ -55,24 +55,27 @@ def _group_exists(process_group: int) -> bool:
     return True
 
 
-def _signal_group(process_group: int, signal_number: int) -> None:
+def _signal_group(process: subprocess.Popen[str], signal_number: int) -> None:
     try:
-        os.killpg(process_group, signal_number)
-    except (ProcessLookupError, PermissionError):
-        # macOS can report EPERM after the group has become inaccessible.
+        os.killpg(process.pid, signal_number)
+    except ProcessLookupError:
         pass
+    except PermissionError:
+        # macOS can report EPERM after a completed leader becomes inaccessible.
+        if process.poll() is None:
+            raise
 
 
 def _terminate_process_group(
     process: subprocess.Popen[str], *, grace: float = 0.5
 ) -> None:
     if os.name == "posix":
-        _signal_group(process.pid, signal.SIGTERM)
+        _signal_group(process, signal.SIGTERM)
         deadline = time.monotonic() + grace
         while _group_exists(process.pid) and time.monotonic() < deadline:
             time.sleep(0.01)
         if _group_exists(process.pid):
-            _signal_group(process.pid, signal.SIGKILL)
+            _signal_group(process, signal.SIGKILL)
     elif process.poll() is None:
         process.terminate()
 
@@ -81,7 +84,7 @@ def _terminate_process_group(
             process.wait(timeout=grace)
         except subprocess.TimeoutExpired:
             if os.name == "posix":
-                _signal_group(process.pid, signal.SIGKILL)
+                _signal_group(process, signal.SIGKILL)
             else:
                 process.kill()
             process.wait(timeout=grace)
