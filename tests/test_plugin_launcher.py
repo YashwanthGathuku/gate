@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.gate_plugin import (
+from scripts.theustad_plugin import (
     PLUGIN_ROOT,
     PluginError,
     allocate_state_dir,
     build_audit_argv,
-    build_gate_argv,
+    build_theustad_argv,
     build_parser,
     default_state_home,
     doctor,
@@ -21,7 +21,7 @@ from scripts.gate_plugin import (
     main,
     resolve_repo,
     run_audit,
-    run_gate,
+    run_theustad,
 )
 
 
@@ -54,31 +54,53 @@ def test_resolve_repo_rejects_non_git_directory(tmp_path):
         resolve_repo(tmp_path)
 
 
-def test_gate_state_home_overrides_xdg_and_default(tmp_path):
-    gate_home = tmp_path / "gate-home"
+def test_theustad_state_home_overrides_xdg_and_default(tmp_path):
+    theustad_home = tmp_path / "theustad-home"
     xdg_home = tmp_path / "xdg"
 
     assert default_state_home(
         environ={
-            "GATE_STATE_HOME": str(gate_home),
+            "THEUSTAD_STATE_HOME": str(theustad_home),
             "XDG_STATE_HOME": str(xdg_home),
         },
         home=tmp_path / "home",
-    ) == gate_home.resolve()
+    ) == theustad_home.resolve()
 
 
-def test_xdg_state_home_is_used_when_gate_override_is_absent(tmp_path):
+def test_theustad_state_home_wins_over_legacy_value(tmp_path):
+    current = tmp_path / "current"
+    legacy = tmp_path / "legacy"
+    warnings = []
+
+    assert default_state_home(
+        environ={"THEUSTAD_STATE_HOME": str(current), "GATE_STATE_HOME": str(legacy)},
+        warning=warnings.append,
+    ) == current.resolve()
+    assert warnings == []
+
+
+def test_legacy_state_home_is_accepted_with_warning(tmp_path):
+    legacy = tmp_path / "legacy"
+    warnings = []
+
+    assert default_state_home(
+        environ={"GATE_STATE_HOME": str(legacy)}, warning=warnings.append
+    ) == legacy.resolve()
+    assert warnings == ["GATE_DEPRECATED use THEUSTAD_STATE_HOME"]
+
+
+def test_xdg_state_home_is_used_when_theustad_override_is_absent(tmp_path):
     xdg_home = tmp_path / "xdg"
 
     assert default_state_home(
         environ={"XDG_STATE_HOME": str(xdg_home)},
         home=tmp_path / "home",
-    ) == (xdg_home / "gate").resolve()
+    ) == (xdg_home / "theustad").resolve()
 
 
 def test_default_state_home_uses_user_local_state(tmp_path):
     assert default_state_home(environ={}, home=tmp_path / "home") == (
-        tmp_path / "home" / ".local" / "state" / "gate"
+        tmp_path / "home" / ".local" / "state" / "theustad"
     ).resolve()
 
 
@@ -211,23 +233,25 @@ def test_run_parser_requires_exactly_one_task_source():
         )
 
 
-def test_gate_argv_uses_absolute_python_plugin_core_and_state_dir(tmp_path):
+def test_theustad_argv_uses_absolute_python_plugin_core_state_and_protections(tmp_path):
     state = tmp_path / "state"
-    argv = build_gate_argv(
+    argv = build_theustad_argv(
         repo=tmp_path / "repo with spaces",
         task_path=state / "task.txt",
         state_dir=state,
         verifier=None,
         timeout=60,
         max_retries=2,
+        protect_add=["package.json", "package-lock.json"],
     )
 
     assert Path(argv[0]).is_absolute()
     assert Path(argv[0]) == Path(os.path.abspath(sys.executable))
-    assert Path(argv[1]) == PLUGIN_ROOT / "gate.py"
+    assert argv[1].endswith("theustad.py")
     assert argv[argv.index("--state-dir") + 1] == str(state)
     assert argv[argv.index("--log") + 1] == str(state / "logs")
     assert "repo with spaces" in argv[argv.index("--repo") + 1]
+    assert argv[argv.index("--protect-add") + 1 :] == ["package.json", "package-lock.json"]
 
 
 def test_launcher_preserves_virtualenv_python_path_without_resolving(
@@ -243,29 +267,31 @@ def test_launcher_preserves_virtualenv_python_path_without_resolving(
 
     monkeypatch.setattr(Path, "resolve", guarded_resolve)
 
-    gate_argv = build_gate_argv(
+    theustad_argv = build_theustad_argv(
         repo=tmp_path / "repo",
         task_path=tmp_path / "task.md",
         state_dir=tmp_path / "state",
         verifier=None,
         timeout=60,
         max_retries=1,
+        protect_add=[],
     )
     audit_argv = build_audit_argv(tmp_path / "audit.jsonl")
 
     expected = os.path.abspath(sys.executable)
-    assert gate_argv[0] == expected
+    assert theustad_argv[0] == expected
     assert audit_argv[0] == expected
 
 
 def test_custom_verifier_is_forwarded_as_one_argument(tmp_path):
-    argv = build_gate_argv(
+    argv = build_theustad_argv(
         repo=tmp_path / "repo",
         task_path=tmp_path / "task.txt",
         state_dir=tmp_path / "state",
         verifier="python -m pytest checks -q",
         timeout=60,
         max_retries=2,
+        protect_add=[],
     )
 
     assert argv[argv.index("--verifier") + 1] == "python -m pytest checks -q"
@@ -281,10 +307,10 @@ def test_task_text_is_copied_to_external_state_and_exit_code_passes_through(
     state.mkdir()
     calls = []
 
-    monkeypatch.setattr("scripts.gate_plugin.resolve_repo", lambda repo, cwd=None: repo)
-    monkeypatch.setattr("scripts.gate_plugin.doctor", lambda *args, **kwargs: None)
+    monkeypatch.setattr("scripts.theustad_plugin.resolve_repo", lambda repo, cwd=None: repo)
+    monkeypatch.setattr("scripts.theustad_plugin.doctor", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "scripts.gate_plugin.allocate_state_dir",
+        "scripts.theustad_plugin.allocate_state_dir",
         lambda repo, state_home=None: state,
     )
 
@@ -295,7 +321,7 @@ def test_task_text_is_copied_to_external_state_and_exit_code_passes_through(
     args = build_parser().parse_args(
         ["run", "--repo", str(repo), "--task-text", "Fix the parser"]
     )
-    result = run_gate(args, process_runner=process_runner)
+    result = run_theustad(args, process_runner=process_runner)
 
     assert result == 7
     assert (state / "task.txt").read_text(encoding="utf-8") == "Fix the parser"
@@ -313,10 +339,10 @@ def test_task_file_is_resolved_without_copying(tmp_path, monkeypatch):
     state.mkdir()
     calls = []
 
-    monkeypatch.setattr("scripts.gate_plugin.resolve_repo", lambda repo, cwd=None: repo)
-    monkeypatch.setattr("scripts.gate_plugin.doctor", lambda *args, **kwargs: None)
+    monkeypatch.setattr("scripts.theustad_plugin.resolve_repo", lambda repo, cwd=None: repo)
+    monkeypatch.setattr("scripts.theustad_plugin.doctor", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "scripts.gate_plugin.allocate_state_dir",
+        "scripts.theustad_plugin.allocate_state_dir",
         lambda repo, state_home=None: state,
     )
 
@@ -327,7 +353,7 @@ def test_task_file_is_resolved_without_copying(tmp_path, monkeypatch):
     args = build_parser().parse_args(
         ["run", "--repo", str(repo), "--task-file", str(task)]
     )
-    result = run_gate(args, process_runner=process_runner)
+    result = run_theustad(args, process_runner=process_runner)
 
     assert result == 0
     argv, _ = calls[0]
@@ -340,10 +366,10 @@ def test_missing_task_file_is_rejected_before_launch(tmp_path, monkeypatch):
     repo.mkdir()
     state = tmp_path / "external-state"
     state.mkdir()
-    monkeypatch.setattr("scripts.gate_plugin.resolve_repo", lambda repo, cwd=None: repo)
-    monkeypatch.setattr("scripts.gate_plugin.doctor", lambda *args, **kwargs: None)
+    monkeypatch.setattr("scripts.theustad_plugin.resolve_repo", lambda repo, cwd=None: repo)
+    monkeypatch.setattr("scripts.theustad_plugin.doctor", lambda *args, **kwargs: None)
     monkeypatch.setattr(
-        "scripts.gate_plugin.allocate_state_dir",
+        "scripts.theustad_plugin.allocate_state_dir",
         lambda repo, state_home=None: state,
     )
 
@@ -351,7 +377,7 @@ def test_missing_task_file_is_rejected_before_launch(tmp_path, monkeypatch):
         ["run", "--repo", str(repo), "--task-file", str(repo / "missing.md")]
     )
     with pytest.raises(PluginError, match="task file"):
-        run_gate(args, process_runner=lambda argv, cwd: 0)
+        run_theustad(args, process_runner=lambda argv, cwd: 0)
 
 
 def test_audit_uses_bundled_verify_chain_and_passes_exit_code(tmp_path):
@@ -380,7 +406,7 @@ def test_main_prints_plugin_error_and_exits_two(monkeypatch, capsys):
     def fail(args, process_runner=None):
         raise PluginError("preflight failed")
 
-    monkeypatch.setattr("scripts.gate_plugin.run_gate", fail)
+    monkeypatch.setattr("scripts.theustad_plugin.run_theustad", fail)
 
     assert main(["run", "--task-text", "fix it"]) == 2
-    assert "GATE_PLUGIN_ERROR preflight failed" in capsys.readouterr().err
+    assert "THEUSTAD_PLUGIN_ERROR preflight failed" in capsys.readouterr().err

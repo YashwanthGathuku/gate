@@ -4,6 +4,7 @@ from pathlib import Path
 
 import gate
 import theustad
+from scripts import gate_plugin, theustad_plugin
 from gatelib.chain import AuditChain as LegacyAuditChain
 from theustadlib.chain import AuditChain
 
@@ -28,3 +29,21 @@ def test_legacy_cli_emits_deprecation_and_canonical_help():
     assert result.returncode == 0
     assert "GATE_DEPRECATED use theustad.py" in result.stderr
     assert "Verify coding-agent completion claims" in result.stdout
+
+
+def test_legacy_plugin_module_import_forwards_canonical_symbols():
+    assert gate_plugin.build_theustad_argv is theustad_plugin.build_theustad_argv
+
+
+def test_legacy_plugin_direct_execution_warns_and_forwards_help():
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "gate_plugin.py"), "--help"],
+        capture_output=True,
+        text=True,
+        shell=False,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "GATE_DEPRECATED use scripts/theustad_plugin.py" in result.stderr
+    assert "Run the bundled TheUstad runtime" in result.stdout
