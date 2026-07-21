@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import shutil
@@ -10,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+import scripts.install_plugin as plugin_installer
 from scripts.build_plugin_assets import build_assets
 from scripts.install_plugin import (
     InstallError,
@@ -34,11 +36,11 @@ def png_dimensions(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def test_manifest_identifies_gate_and_only_bundles_skills():
+def test_manifest_identifies_theustad_and_only_bundles_skills():
     manifest = load_manifest()
 
-    assert manifest["name"] == "gate"
-    assert manifest["version"] == "0.2.1"
+    assert manifest["name"] == "theustad"
+    assert manifest["version"] == "1.0.0"
     assert manifest["skills"] == "./skills/"
     assert manifest["license"] == "GPL-3.0-or-later"
     assert {"hooks", "mcpServers", "apps"}.isdisjoint(manifest)
@@ -48,9 +50,14 @@ def test_manifest_metadata_and_asset_paths_exist():
     manifest = load_manifest()
     interface = manifest["interface"]
 
-    assert interface["displayName"] == "Gate"
+    assert interface["displayName"] == "TheUstad"
     assert interface["category"] == "Developer Tools"
-    assert interface["defaultPrompt"]
+    assert interface["defaultPrompt"] == (
+        "Run this coding task through TheUstad and report the exact verdict "
+        "and audit root."
+    )
+    assert manifest["repository"] == "https://github.com/YashwanthGathuku/theustad"
+    assert manifest["homepage"] == "https://devpost.com/software/gate-0lypv2"
     for field in ("composerIcon", "logo"):
         value = interface[field]
         assert value.startswith("./assets/")
@@ -134,12 +141,12 @@ def write_marketplace(path: Path, plugins: list[dict]) -> None:
 
 
 def test_copy_plugin_uses_allowlist_and_excludes_repo_and_cache_content(tmp_path):
-    destination = tmp_path / "home" / "plugins" / "gate"
+    destination = tmp_path / "home" / "plugins" / "theustad"
 
     copy_plugin(ROOT, destination)
 
-    assert (destination / "gate.py").is_file()
-    assert (destination / "gatelib" / "session.py").is_file()
+    assert (destination / "theustad.py").is_file()
+    assert (destination / "theustadlib" / "session.py").is_file()
     assert (destination / "skills" / "run" / "SKILL.md").is_file()
     assert (destination / "LICENSE").is_file()
     assert (destination / "NOTICE").is_file()
@@ -153,7 +160,7 @@ def test_copy_plugin_uses_allowlist_and_excludes_repo_and_cache_content(tmp_path
 
 
 def test_copy_plugin_replaces_stale_destination_content(tmp_path):
-    destination = tmp_path / "home" / "plugins" / "gate"
+    destination = tmp_path / "home" / "plugins" / "theustad"
     destination.mkdir(parents=True)
     (destination / ".mcp.json").write_text("{}", encoding="utf-8")
 
@@ -168,7 +175,7 @@ def test_copy_plugin_replaces_destination_symlink_without_following_it(tmp_path)
     victim.mkdir()
     marker = victim / "keep.txt"
     marker.write_text("do not delete", encoding="utf-8")
-    destination = tmp_path / "plugins" / "gate"
+    destination = tmp_path / "plugins" / "theustad"
     destination.parent.mkdir()
     try:
         destination.symlink_to(victim, target_is_directory=True)
@@ -186,7 +193,7 @@ def test_copy_plugin_replaces_destination_symlink_without_following_it(tmp_path)
 def test_copy_plugin_does_not_resolve_final_destination_component(
     tmp_path, monkeypatch
 ):
-    destination = tmp_path / "plugins" / "gate"
+    destination = tmp_path / "plugins" / "theustad"
     destination.parent.mkdir()
     original_resolve = Path.resolve
 
@@ -203,8 +210,8 @@ def test_copy_plugin_does_not_resolve_final_destination_component(
 
 
 def test_copy_plugin_rejects_symlinked_package_entry(tmp_path, monkeypatch):
-    destination = tmp_path / "plugins" / "gate"
-    symlinked_entry = ROOT / "gate.py"
+    destination = tmp_path / "plugins" / "theustad"
+    symlinked_entry = ROOT / "theustad.py"
     original_is_symlink = Path.is_symlink
 
     def fake_is_symlink(path):
@@ -218,12 +225,12 @@ def test_copy_plugin_rejects_symlinked_package_entry(tmp_path, monkeypatch):
         copy_plugin(ROOT, destination)
 
 
-def test_copy_plugin_rejects_source_without_gate_manifest(tmp_path):
+def test_copy_plugin_rejects_source_without_theustad_manifest(tmp_path):
     source = tmp_path / "empty"
     source.mkdir()
 
     with pytest.raises(InstallError, match="plugin.json"):
-        copy_plugin(source, tmp_path / "plugins" / "gate")
+        copy_plugin(source, tmp_path / "plugins" / "theustad")
 
 
 def test_copy_plugin_preserves_existing_install_when_source_is_incomplete(tmp_path):
@@ -234,8 +241,8 @@ def test_copy_plugin_preserves_existing_install_when_source_is_incomplete(tmp_pa
         "skills",
         "scripts",
         "assets",
-        "gate.py",
-        "gatelib",
+        "theustad.py",
+        "theustadlib",
         "verify_chain.py",
         "LICENSE",
         "README.md",
@@ -247,7 +254,7 @@ def test_copy_plugin_preserves_existing_install_when_source_is_incomplete(tmp_pa
         else:
             shutil.copy2(original, destination)
 
-    installed = tmp_path / "home" / "plugins" / "gate"
+    installed = tmp_path / "home" / "plugins" / "theustad"
     installed.mkdir(parents=True)
     marker = installed / "working-install.txt"
     marker.write_text("preserve", encoding="utf-8")
@@ -266,14 +273,21 @@ def test_update_marketplace_preserves_unrelated_plugins_and_top_level_keys(tmp_p
     }
     write_marketplace(path, [other])
 
-    update_marketplace(path, plugin_path=tmp_path / "plugins" / "gate")
+    update_marketplace(
+        path,
+        plugin_name="theustad",
+        plugin_path=tmp_path / "plugins" / "theustad",
+    )
 
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["custom"] == {"preserve": True}
-    assert [entry["name"] for entry in payload["plugins"]] == ["other", "gate"]
-    gate = payload["plugins"][1]
-    assert gate["source"] == {"source": "local", "path": "./plugins/gate"}
-    assert gate["policy"]["installation"] == "AVAILABLE"
+    assert [entry["name"] for entry in payload["plugins"]] == ["other", "theustad"]
+    theustad = payload["plugins"][1]
+    assert theustad["source"] == {
+        "source": "local",
+        "path": "./plugins/theustad",
+    }
+    assert theustad["policy"]["installation"] == "AVAILABLE"
 
 
 def test_update_marketplace_replaces_gate_in_place(tmp_path):
@@ -287,7 +301,11 @@ def test_update_marketplace_replaces_gate_in_place(tmp_path):
         ],
     )
 
-    update_marketplace(path, plugin_path=tmp_path / "plugins" / "gate")
+    update_marketplace(
+        path,
+        plugin_name="gate",
+        plugin_path=tmp_path / "plugins" / "gate",
+    )
 
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert [entry["name"] for entry in payload["plugins"]] == [
@@ -311,7 +329,18 @@ def test_update_marketplace_rejects_symlinked_manifest(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "is_symlink", fake_is_symlink)
 
     with pytest.raises(InstallError, match="symlink"):
-        update_marketplace(path, plugin_path=plugin_path)
+        update_marketplace(path, plugin_name="gate", plugin_path=plugin_path)
+
+
+def test_update_marketplace_rejects_path_for_a_different_plugin(tmp_path):
+    path = tmp_path / ".agents" / "plugins" / "marketplace.json"
+
+    with pytest.raises(InstallError, match="theustad"):
+        update_marketplace(
+            path,
+            plugin_name="theustad",
+            plugin_path=tmp_path / "plugins" / "gate",
+        )
 
 
 def test_installer_invokes_codex_plugin_add_with_argv(tmp_path):
@@ -330,13 +359,171 @@ def test_installer_invokes_codex_plugin_add_with_argv(tmp_path):
 
     assert result == 0
     assert calls == [
-        (["/usr/bin/codex", "plugin", "add", "gate@personal", "--json"], home)
+        (
+            ["/usr/bin/codex", "plugin", "add", "theustad@personal", "--json"],
+            home,
+        )
     ]
-    assert (home / "plugins" / "gate" / "gate.py").is_file()
+    assert (home / "plugins" / "theustad" / "theustad.py").is_file()
+    assert not (home / "plugins" / "gate").exists()
     marketplace = json.loads(
         (home / ".agents" / "plugins" / "marketplace.json").read_text()
     )
-    assert marketplace["plugins"][0]["name"] == "gate"
+    assert marketplace["plugins"][0]["name"] == "theustad"
+
+
+def test_installer_upgrades_existing_gate_to_forwarding_package(tmp_path):
+    home = tmp_path / "home"
+    legacy = home / "plugins" / "gate"
+    legacy.mkdir(parents=True)
+    (legacy / "old-runtime.py").write_text("duplicate", encoding="utf-8")
+    calls = []
+
+    result = install_main(
+        ["--source", str(ROOT), "--home", str(home)],
+        process_runner=lambda argv, cwd: calls.append((argv, cwd)) or 0,
+        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
+    )
+
+    assert result == 0
+    assert calls == [
+        (["/usr/bin/codex", "plugin", "add", "theustad@personal", "--json"], home),
+        (["/usr/bin/codex", "plugin", "add", "gate@personal", "--json"], home),
+    ]
+    assert {path.relative_to(legacy).as_posix() for path in legacy.rglob("*")} == {
+        ".codex-plugin",
+        ".codex-plugin/plugin.json",
+        "skills",
+        "skills/audit",
+        "skills/audit/SKILL.md",
+        "skills/doctor",
+        "skills/doctor/SKILL.md",
+        "skills/run",
+        "skills/run/SKILL.md",
+        "scripts",
+        "scripts/gate_plugin.py",
+    }
+    assert (home / "plugins" / "theustad" / "theustadlib").is_dir()
+    assert not (legacy / "gatelib").exists()
+    assert not (legacy / "theustadlib").exists()
+
+
+def test_installer_marketplace_gate_entry_triggers_upgrade_and_preserves_slot(tmp_path):
+    home = tmp_path / "home"
+    marketplace = home / ".agents" / "plugins" / "marketplace.json"
+    write_marketplace(
+        marketplace,
+        [{"name": "before"}, {"name": "gate"}, {"name": "after"}],
+    )
+
+    result = install_main(
+        ["--source", str(ROOT), "--home", str(home)],
+        process_runner=lambda argv, cwd: 0,
+        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
+    )
+
+    assert result == 0
+    payload = json.loads(marketplace.read_text(encoding="utf-8"))
+    assert payload["custom"] == {"preserve": True}
+    assert [entry["name"] for entry in payload["plugins"]] == [
+        "before",
+        "gate",
+        "after",
+        "theustad",
+    ]
+    assert (home / "plugins" / "gate" / "scripts" / "gate_plugin.py").is_file()
+
+
+def test_installer_flag_forces_legacy_alias_in_clean_home(tmp_path):
+    home = tmp_path / "home"
+    calls = []
+
+    result = install_main(
+        [
+            "--source",
+            str(ROOT),
+            "--home",
+            str(home),
+            "--install-legacy-alias",
+        ],
+        process_runner=lambda argv, cwd: calls.append((argv, cwd)) or 0,
+        which=lambda name: "/usr/bin/codex" if name == "codex" else None,
+    )
+
+    assert result == 0
+    assert [call[0][-2] for call in calls] == ["theustad@personal", "gate@personal"]
+    assert (home / "plugins" / "gate" / "scripts" / "gate_plugin.py").is_file()
+
+
+def test_install_legacy_adapter_rejects_symlinked_package_entry(tmp_path, monkeypatch):
+    source = ROOT / "compat" / "gate-plugin"
+    symlinked_entry = source / "scripts"
+    original_is_symlink = Path.is_symlink
+
+    def fake_is_symlink(path):
+        if path == symlinked_entry:
+            return True
+        return original_is_symlink(path)
+
+    monkeypatch.setattr(Path, "is_symlink", fake_is_symlink)
+
+    with pytest.raises(InstallError, match="symlink"):
+        plugin_installer.install_legacy_adapter(
+            source, tmp_path / "plugins" / "gate"
+        )
+
+
+def test_legacy_adapter_warns_and_forwards_with_absolute_python(tmp_path, monkeypatch):
+    plugins = tmp_path / "plugins"
+    adapter_source = ROOT / "compat" / "gate-plugin"
+    adapter = plugins / "gate"
+    plugin_installer.install_legacy_adapter(adapter_source, adapter)
+    canonical = plugins / "theustad" / "scripts" / "theustad_plugin.py"
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# canonical test launcher\n", encoding="utf-8")
+
+    module_path = adapter / "scripts" / "gate_plugin.py"
+    spec = importlib.util.spec_from_file_location("installed_gate_adapter", module_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 7)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(sys, "argv", [str(module_path), "doctor", "--repo", "space path"])
+
+    assert module.main() == 7
+    assert calls == [
+        (
+            [
+                os.path.abspath(sys.executable),
+                str(canonical),
+                "doctor",
+                "--repo",
+                "space path",
+            ],
+            {"shell": False, "check": False},
+        )
+    ]
+
+
+def test_legacy_adapter_rejects_missing_canonical_launcher(tmp_path, capsys):
+    adapter = tmp_path / "plugins" / "gate"
+    plugin_installer.install_legacy_adapter(ROOT / "compat" / "gate-plugin", adapter)
+    module_path = adapter / "scripts" / "gate_plugin.py"
+    spec = importlib.util.spec_from_file_location("missing_canonical_adapter", module_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.main() == 2
+    captured = capsys.readouterr()
+    assert "GATE_DEPRECATED use $theustad:<command>" in captured.err
+    assert "canonical TheUstad plugin launcher is missing" in captured.err
 
 
 def test_installer_missing_codex_does_not_change_plugin_state(tmp_path):

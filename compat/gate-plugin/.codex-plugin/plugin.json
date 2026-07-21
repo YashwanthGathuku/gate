@@ -1,7 +1,7 @@
 {
-  "name": "theustad",
+  "name": "gate",
   "version": "1.0.0",
-  "description": "Protected verification and retry for Codex coding tasks.",
+  "description": "Deprecated Gate plugin alias that forwards commands to TheUstad.",
   "author": {
     "name": "Yashwanth Gathuku"
   },
@@ -10,15 +10,14 @@
   "license": "GPL-3.0-or-later",
   "keywords": [
     "codex",
-    "verification",
-    "testing",
-    "security"
+    "compatibility",
+    "deprecated"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "TheUstad",
-    "shortDescription": "Make coding agents earn completion.",
-    "longDescription": "Run Codex through protected verification, exact-thread retries, and tamper-evident audit records.",
+    "displayName": "Gate (TheUstad compatibility)",
+    "shortDescription": "Deprecated alias for TheUstad.",
+    "longDescription": "This deprecated Gate package forwards plugin commands to the canonical TheUstad installation.",
     "developerName": "Yashwanth Gathuku",
     "category": "Developer Tools",
     "capabilities": [
@@ -28,8 +27,6 @@
     ],
     "websiteURL": "https://devpost.com/software/gate-0lypv2",
     "brandColor": "#14B86E",
-    "composerIcon": "./assets/icon.png",
-    "logo": "./assets/logo.png",
-    "defaultPrompt": "Run this coding task through TheUstad and report the exact verdict and audit root."
+    "defaultPrompt": "This deprecated Gate alias forwards the command to TheUstad."
   }
 }
