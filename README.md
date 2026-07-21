@@ -1,165 +1,74 @@
-# TheUstad 1.0
+# TheUstad
 
 > **Codex says "done." TheUstad checks whether that is true.**
 
-TheUstad is a verification-and-retry runtime for coding agents, available as both
-a standalone CLI and a Codex plugin. It treats an agent's completion message as
-a claim, not proof. TheUstad protects trusted test inputs, runs a TheUstad-controlled
-verifier, returns failure evidence to the same child Codex thread, and writes a
+TheUstad is a verification-and-retry runtime for coding agents. It treats an
+agent's completion message as a claim, protects configured inputs, runs a
+trusted verifier, returns evidence to the exact child session, and records a
 tamper-evident audit chain.
 
 ## Why TheUstad exists
 
-Coding agents can generate a patch in minutes. The harder question comes next:
-**who verifies that the patch actually satisfies the task?**
-
-Today, the agent often writes the code, chooses which tests to run, interprets
-their output, and announces that the work is complete. That puts the work and
-its grade inside the same trust boundary. It creates five practical failure
-modes:
-
-1. The agent runs a narrow test, misses a cross-file regression, and says the
-   task is complete.
-2. A patch passes the available tests but still implements the wrong behavior.
-3. The agent changes or deletes a test, configuration file, or verifier input
-   so that a broken patch appears green.
-4. A failed attempt is retried without preserving the exact evidence and
-   session that produced it.
-5. The final "all tests pass" statement leaves no portable record that another
-   person can independently check later.
-
-This is not a hypothetical edge case:
+An agent can write code, select a convenient test, and announce success inside
+one trust boundary. TheUstad separates generation from acceptance by requiring
+protected evidence before it accepts a completion claim.
 
 - [OpenAI's monitoring of internal coding agents](https://openai.com/index/how-we-monitor-internal-coding-agents-misalignment/)
-  reports that agents sometimes illegitimately edit tests to make them pass.
-  OpenAI labels this reward-hacking category rare but high severity.
+  documents rare but high-severity reward-hacking behavior, including test edits.
 - [METR's Claude 3.7 evaluation](https://metr.org/evaluations/claude-3-7-report/)
-  documents a software-engineering run in which the model directly edited a
-  provided tests file to cause all tests to pass.
+  includes a software-engineering run that edited a provided test to pass.
 - The [2025 Stack Overflow Developer Survey](https://survey.stackoverflow.co/2025/ai)
-  found that 46% of respondents distrusted the accuracy of AI tools, compared
-  with 33% who trusted them; only 3.1% reported high trust.
+  reports substantial developer distrust of AI-tool accuracy.
 - [DORA's analysis of AI-assisted development](https://dora.dev/insights/balancing-ai-tensions/)
-  calls time saved writing and then re-spent auditing a verification tax. It
-  reports that 30% of developers had little or no trust in AI-generated code.
-- A SWE-bench correctness study,
-  [*Are "Solved Issues" in SWE-bench Really Solved Correctly?*](https://arxiv.org/html/2503.15223v1),
-  found that 7.8% of evaluated plausible patches were counted correct by
-  narrower validation while failing the full developer-written test suite. It
-  also found behavioral discrepancies in 29.6% of plausible patches compared
-  with the human patch.
+  describes the verification work that can offset faster code generation.
+- [Are "Solved Issues" in SWE-bench Really Solved Correctly?](https://arxiv.org/html/2503.15223v1)
+  reports plausible patches that failed fuller developer-written validation.
 
-The research describes two related problems: verification is expensive, and
-the evidence used for verification can itself be weak or manipulated. TheUstad is
-an outcome-control layer for that gap. It does not try to infer whether an
-agent intended to cheat; it makes the same deterministic decision either way.
+TheUstad does not make software 100% correct. A verifier can only establish the
+protected, configured checks it runs; human review and strong acceptance tests
+remain necessary.
 
-## How the idea became TheUstad
-
-TheUstad began with one question:
-
-> Why should the agent that performed the work also decide whether the work is
-> finished?
-
-The first design rule was simple: a completion claim must trigger verification,
-not end it. The initial fixture made that rule concrete. A ticket asks for
-`parse_duration("90m")` to work. The obvious parser fix makes targeted tests
-green but silently violates a billing invariant in another module. TheUstad runs
-the full verifier, catches the regression, and returns the real failure to the
-same Codex thread.
-
-Red-teaming exposed a more serious hole: an agent could delete the failing test
-and receive a green result. That attack became a product requirement rather
-than a hidden caveat. TheUstad freezes trusted test and verifier inputs before the
-agent starts, reports protected changes as `TAMPERED`, restores the baseline,
-and makes the agent continue from the evidence.
-
-That evolution produced TheUstad's three-beat proof:
-
-```text
-false completion claim -> FALSIFIED
-trusted test deletion  -> TAMPERED
-correct implementation -> VERIFIED
-```
-
-The scripted fixture makes this sequence repeatable. The source edits, test
-deletion, verifier processes, verdicts, restoration, retries, and audit hashes
-are real. A separate live run demonstrates the same core with a real Codex
-agent and a real open-source project.
-
-## What TheUstad changes
+## What changes with TheUstad
 
 | Without TheUstad | With TheUstad |
 |---|---|
-| Agent says "done" | "Done" triggers verification |
-| Agent chooses a convenient test command | TheUstad runs the configured full verifier |
-| Tests and verifier inputs can change unnoticed | Protected inputs are frozen, checked, and restored |
-| Green output is accepted at face value | The verifier uses a trusted absolute interpreter and isolated mode |
-| A retry may lose the original failure context | Evidence resumes the exact child Codex thread |
-| The result is a chat message | The result includes `FINAL`, `AUDIT_LOG`, and `AUDIT_ROOT` |
+| Agent prose ends the task | A completion claim triggers verification |
+| Agent-selected checks decide acceptance | A trusted, configured verifier decides the result |
+| Test and verifier inputs can change unnoticed | Protected inputs are frozen, checked, and restored |
+| A retry can lose the original context | Evidence resumes the exact child thread |
+| The result is chat output | The result includes `FINAL`, `AUDIT_LOG`, and `AUDIT_ROOT` |
 
-TheUstad deliberately separates generation from acceptance:
+The standalone CLI and Codex plugin use the same enforcement core. The plugin
+is an allowlisted copy of `theustad.py` and `theustadlib/`, not a separate or
+weaker verifier.
 
-```text
-task -> coding agent -> completion claim
-                     -> protected-input check
-                     -> TheUstad-controlled verifier
-                     -> FALSIFIED / TAMPERED / VERIFIED
-                     -> exact-thread retry with evidence
-                     -> independently checkable audit chain
+TheUstad succeeds when completion becomes falsifiable and reproducible rather
+than accepted solely from an agent's prose.
+
+## Three-minute proof
+
+The reproducible `demo3` fixture is a **deterministic scripted adversarial rehearsal**,
+not a live AI run. Its reasoning and final messages are scripted;
+its source edits, protected-test deletion, verifier subprocesses, restoration,
+and audit records are real.
+
+```bash
+python fake_codex.py reset --repo demo_repo
+python theustad.py --repo demo_repo --task task.md \
+  --cmd "python ../fake_codex.py demo3" \
+  --resume-cmd "python ../fake_codex.py demo3 --resume {thread_id}" \
+  --max-retries 3 --no-color
 ```
 
-The standalone CLI provides the enforcement engine. The Codex plugin makes the
-same enforcement core available through `$theustad:doctor`, `$theustad:run`,
-and `$theustad:audit`. The plugin is an adoption layer, not a second or weaker
-verifier.
-
-## What success means
-
-TheUstad does not claim to make software 100% correct. A weak or incomplete test
-suite remains a weak oracle, and `VERIFIED` means only that the protected,
-configured verifier passed for the claimed task.
-
-TheUstad succeeds when completion becomes falsifiable and reproducible:
-
-- an agent cannot earn success from its own prose;
-- narrow green tests cannot stand in for the configured full verifier;
-- protected-test tampering becomes visible and recoverable;
-- failures return as concrete evidence instead of another vague prompt; and
-- a reviewer can validate the resulting audit chain without trusting the
-  original chat transcript.
-
-For individual developers, this reduces repetitive "did it really run?" work.
-For teams, it creates a reviewable boundary between AI-generated changes and
-the checks allowed to accept them. For CI, security, and compliance workflows,
-it produces a portable decision record while preserving the requirement for
-human review and strong acceptance tests.
-
-## Legacy Gate submission evidence
-
-- Devpost: https://devpost.com/software/gate-0lypv2
-- Public narrated live real-project demo: https://youtu.be/cAaMzRLyqWQ
-- Deterministic adversarial-fixture demo: https://youtu.be/kGGdz649zCQ
-- Live real-project video: [`docs/video/gate-real-project-live-narrated.mp4`](docs/video/gate-real-project-live-narrated.mp4)
-- Video timeline and integrity: [`docs/video/README.md`](docs/video/README.md)
-- Real-project recording procedure: [`docs/demo/README.md`](docs/demo/README.md)
-- Before/after comparison evidence: [`docs/evidence/real_project_demo`](docs/evidence/real_project_demo/README.md)
-- Permanent release evidence: [`docs/evidence`](docs/evidence)
-- Anchored rehearsal root:
-  `200042504cd90869d2bc8edcd60278049e231ead88ae69a60919a64a335d4a20`
-
-## Supported platforms
-
-- Python 3.10 or newer.
-- Linux and macOS are supported.
-- On Windows, run TheUstad inside WSL 2. Native Windows process-tree termination
-  is not supported and must not be presented as supported behavior.
-- Runtime code uses only the Python standard library. Pytest is the development
-  and default verifier dependency.
+It produces `FALSIFIED -> TAMPERED -> VERIFIED`. `PASS_NO_CLAIM` is neutral,
+not a successful completion. The rehearsal demonstrates explicit protection
+and recovery mechanics; it does not select a project's verification framework.
 
 ## Quick start
 
-For the Codex plugin, install once from a supported shell:
+Run these commands from Linux, macOS, or WSL 2. Clone the canonical repository
+and create the trusted environment outside the repository that TheUstad will
+verify:
 
 ```bash
 git clone https://github.com/YashwanthGathuku/theustad.git
@@ -171,32 +80,22 @@ THEUSTAD_PYTHON="$HOME/.local/share/theustad/plugin-venv/bin/python"
 codex plugin list --json
 ```
 
-Restart Codex, open a real Git project, and invoke `$theustad:doctor`,
-`$theustad:run`, then `$theustad:audit`. The complete installation, Codex UI,
-WSL 2, real-project, update, and troubleshooting workflow is in
-[`docs/PLUGIN_GUIDE.md`](https://github.com/YashwanthGathuku/theustad/blob/master/docs/PLUGIN_GUIDE.md).
+The list must show `theustad@personal` as installed and enabled. Restart Codex
+after installation, then follow [the plugin guide](docs/PLUGIN_GUIDE.md).
 
-## Choose an interface
+## Choose CLI or Codex plugin
 
-TheUstad has two invocation paths. They package the same `theustad.py` and
-`theustadlib/` core and produce the same verdicts and audit-chain format.
-
-| Interface | Best for | Entry point |
+| Interface | Use it for | Entry point |
 |---|---|---|
-| **Codex plugin** | Developers working inside Codex who want named commands and automatic external state paths | `$theustad:doctor`, `$theustad:run`, `$theustad:audit` |
-| **Standalone CLI** | CI, shell automation, security review, and environments that do not install Codex plugins | `python theustad.py --repo ... --task ...` |
+| Standalone CLI | CI, automation, direct review | `python theustad.py --repo ... --task ...` |
+| Codex plugin | A protected coding task in Codex | `$theustad:doctor`, `$theustad:run`, `$theustad:audit` |
 
-The plugin is a convenience and adoption layer, not a second verifier. The
-installer packages an allowlisted copy of the same `theustad.py` and
-`theustadlib/`
-enforcement core used by the standalone CLI. This keeps plugin execution
-outside the target repository without reducing TheUstad's verification behavior.
-Use either interface for a run; do not launch both against the same working
-tree at once.
+Use one interface per working tree at a time. Both write the same verdicts and
+SHA-256 audit-chain format.
 
 ## Standalone CLI
 
-Create an environment in a Linux, macOS, or WSL 2 shell and run the tests:
+Install the default verifier dependency and run the repository suite:
 
 ```bash
 python3 -m venv .venv
@@ -205,260 +104,125 @@ python -m pip install --upgrade pip pytest
 python -m pytest tests -q
 ```
 
-Then run TheUstad against a Git repository and an explicit task file:
+Run TheUstad against an explicit Git repository and task file:
 
 ```bash
-python /absolute/path/to/theustad/theustad.py \
-  --repo /absolute/path/to/project \
+python theustad.py --repo /absolute/path/to/project \
   --task /absolute/path/to/task.md
 ```
 
-TheUstad prints `FINAL`, `AUDIT_LOG`, and `AUDIT_ROOT`. Only exit code `0` with
-`FINAL VERIFIED` is success. Validate the emitted log independently with
-`verify_chain.py` as shown under [Audit verification](#audit-verification).
+Only exit code `0` with `FINAL VERIFIED` is successful completion. See the
+[real-project reproduction guide](docs/demo/README.md) for ordinary Codex,
+CLI, and plugin paths.
 
 ## Codex plugin
 
-TheUstad's plugin packages the runtime outside the repository being modified
-and adds three Codex skills: `$theustad:doctor`, `$theustad:run`, and
-`$theustad:audit`. A TheUstad run starts a separate TheUstad-controlled child
-Codex session; it does not claim to retroactively protect the conversation that
-launched it.
-
-Install the local package from a Linux, macOS, or WSL 2 checkout using the
-external trusted environment from [Quick start](#quick-start):
-
-```bash
-git clone https://github.com/YashwanthGathuku/theustad.git
-cd theustad
-"$THEUSTAD_PYTHON" scripts/install_plugin.py
-codex plugin list --json
-```
-
-The installer copies an allowlisted runtime to `~/plugins/theustad`, preserves
-unrelated entries in `~/.agents/plugins/marketplace.json`, and runs
-`codex plugin add theustad@personal --json`. Restart Codex if the installed skills
-do not appear immediately.
-
-In Codex Desktop on Linux or macOS, open the target repository and enter the
-skill prompts below in a new task. On a Windows host, run the successful coding
-workflow from the Codex terminal UI inside WSL 2; native Windows Desktop can
-discover the plugin and validate existing logs but `$theustad:doctor` and
-`$theustad:run` intentionally fail closed. See the
-[plugin guide](https://github.com/YashwanthGathuku/theustad/blob/master/docs/PLUGIN_GUIDE.md#windows-with-wsl-2)
-for copy-paste setup.
-
-From any supported Git repository, invoke the skills in Codex:
+The plugin starts a separate TheUstad-controlled child; the parent task is only
+a launcher and result viewer. In a fresh Codex task, run:
 
 ```text
-$theustad:doctor Check whether this repository is ready for TheUstad.
-$theustad:run Implement the requested task and report the exact TheUstad verdict.
+$theustad:doctor Check this Git repository using the trusted absolute Python.
+$theustad:run Implement the task in /absolute/path/to/task.md and report CHILD_THREAD, FINAL, AUDIT_LOG, and AUDIT_ROOT exactly.
 $theustad:audit Verify /absolute/path/to/audit_YYYYmmdd_HHMMSS.jsonl.
 ```
 
-`$theustad:run` does not edit the repository from the parent conversation. It
-launches the bundled runtime, which freezes protected inputs before starting a
-separate child, resumes that exact child thread with verifier evidence, and
-returns TheUstad's terminal verdict and audit root without reinterpretation. Only
-child exit code 0 plus `FINAL VERIFIED` is successful completion.
-
-Native Windows installation is allowed so users can inspect the package, but
-`$theustad:doctor` and `$theustad:run` fail closed there. Use WSL 2 because
-TheUstad's v2 contract requires POSIX process-group termination.
-`$theustad:audit` can validate
-an existing chain on native Windows because it does not start an agent.
-
-Remove the local installation with:
+Remove the canonical package with:
 
 ```bash
 codex plugin remove theustad@personal --json
 ```
 
-For judging, install the plugin, run `$theustad:doctor`, start one real task
-through `$theustad:run`, and validate the emitted log with `$theustad:audit`.
-The deterministic
-adversarial rehearsal below remains the repeatable proof of
-`FALSIFIED -> TAMPERED -> VERIFIED`; the plugin workflow demonstrates that the
-same TheUstad core is installable and usable from an active developer project.
+## Custom verifiers and protected inputs
 
-## Gate 1.x compatibility
-
-Gate-named CLI, import, environment-variable, and plugin entry points are
-deprecated compatibility adapters through TheUstad 1.x. Existing automation
-may temporarily use `gate.py`, `gatelib`, `GATE_STATE_HOME`, `GATE_PYTHON`, or
-`gate@personal`; new installations and documentation must use the canonical
-TheUstad names above. These adapters forward to the same runtime and are
-scheduled for removal in 2.0.
-
-## License and attribution
-
-TheUstad is licensed under **GPL-3.0-or-later**. When distributing TheUstad or a
-derivative, preserve the copyright and attribution notices, include the
-license, mark changes, and provide corresponding source as required by GPLv3.
-See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
-
-`NOTICE` applies a reasonable author-attribution preservation term under
-GPLv3 section 7(b) to redistributed copies and derivatives.
-
-The license does not require someone who only runs an unmodified private copy
-to publish a credit statement. The redistribution obligations provide the
-enforceable credit and source-preservation behavior intended for downstream
-copies and forks.
-
-## Legacy Gate real-project recording
-
-The recording walkthrough uses the real
-[`pytest-dev/iniconfig`](https://github.com/pytest-dev/iniconfig) repository at
-a pinned commit with a human-authored acceptance test. It includes separate,
-copy-paste paths for the Codex plugin and original standalone CLI, plus a
-two-minute shot list and honesty labels:
-
-[`docs/demo/README.md`](docs/demo/README.md)
-
-The checked-in
-[`narrated live recording`](docs/video/gate-real-project-live-narrated.mp4)
-shows the ordinary control run, plugin installation, live `$gate:run`, exact
-verified child, audit validation, and the final before/after comparison. It
-adds a voiceover and burned-in captions to the preserved desktop capture. Its
-full transcripts and audit are under
-[`docs/evidence/real_project_video`](docs/evidence/real_project_video/README.md).
-The narrated recording is [public on YouTube](https://youtu.be/cAaMzRLyqWQ)
-for judges who do not want to download the checked-in MP4. The original silent
-capture remains at [`docs/video/gate-real-project-live.mp4`](docs/video/gate-real-project-live.mp4)
-as recording-source evidence. Its initial public upload,
-https://youtu.be/njgvvLapxs0, remains available as a historical recording
-reference; the narrated upload above is the current submission video.
-
-The live recording uses two clean clones of the same pinned project:
-
-| Mode | Independent result | Verification evidence |
-|---|---:|---|
-| Ordinary Codex without Gate | 51 passed | No Gate verdict, audit log, or root |
-| Installed Gate plugin | 50 passed | `$gate:run` verified, then `$gate:audit` validated the chain |
-
-The original standalone CLI was exercised separately against a third clean
-clone. Its `51 passed`, `FINAL VERIFIED`, and independently valid chain are in
-[`docs/evidence/real_project_demo`](docs/evidence/real_project_demo/README.md).
-
-Ordinary Codex solved the task. Gate's demonstrated value is the protected,
-independent completion decision and portable audit record, not a claim that it
-improves the generated implementation. The plugin provides that same core
-inside the developer's active Codex workflow; the CLI remains available for
-automation and direct review.
-
-For a clean checkout, give the target fixture its own Git history before a
-live Codex run:
+The default verifier is pytest from the trusted absolute interpreter in
+isolated mode. Supply an explicit custom verifier when the project requires a
+different acceptance command; the command is parsed as argv and never needs a
+shell:
 
 ```bash
-python fake_codex.py reset --repo demo_repo
-git -C demo_repo init
-git -C demo_repo add -A
-git -C demo_repo commit -m "seed: broken duration fixture"
+python theustad.py --repo /absolute/path/to/project \
+  --task /absolute/path/to/task.md \
+  --verifier "npm test" \
+  --protect-add package.json package-lock.json
 ```
 
-The seeded fixture has 11 tests and intentionally starts with one failure:
-`parse_duration("90m")`.
+The custom verifier is the acceptance oracle for that run. Protect all inputs
+it needs before starting; protected files are checked before and after
+verification, and changed inputs are restored and reported as `TAMPERED`.
 
-## Deterministic adversarial rehearsal
+## Upgrade from Gate
 
-`demo3` is a **deterministic scripted adversarial rehearsal**, not a live AI
-run. Its reasoning and final messages are scripted. Its source edits, test
-deletion, and pytest subprocesses are real.
+**Formerly Gate**, TheUstad is the canonical product and runtime. Gate-named
+entry points are deprecated migration adapters through TheUstad 1.x; they
+forward to the same runtime and contain no second implementation.
 
-Reset the fixture, then run the rehearsal from TheUstad's repository root:
+Existing users can install the canonical package from the checkout above. To
+retain a legacy adapter temporarily, run:
 
 ```bash
-python fake_codex.py reset --repo demo_repo
-python theustad.py --repo demo_repo --task task.md \
-  --cmd "python ../fake_codex.py demo3" \
-  --resume-cmd "python ../fake_codex.py demo3 --resume {thread_id}" \
-  --max-retries 3 --no-color
+"$THEUSTAD_PYTHON" scripts/install_plugin.py --install-legacy-alias
 ```
 
-The expected verdict sequence is:
-
-```text
-FALSIFIED -> TAMPERED -> VERIFIED
-```
-
-Round 1 makes the narrow parser fix and passes only parser tests; TheUstad's full
-verifier exposes two invoice regressions. Round 2 deletes the invoice test and
-gets a genuinely green local run; TheUstad detects and restores the protected
-file. Round 3 moves canonical invoice validation into `invoice.py`, and the
-full 11-test suite passes.
-
-Two additional scripted scenarios are available:
-
-- `naive2`: `FALSIFIED -> VERIFIED`, without the deletion attack.
-- `crash`: agent exit 2 becomes `AGENT_ERROR`, even if its final text claims
-  completion.
-
-Replace `demo3` in both command options to run either scenario.
-
-## Legacy Gate live Codex run
-
-The real run is separate from the scripted rehearsal. Authenticate the Codex
-CLI, reset the fixture, and launch this from another terminal:
-
-```bash
-python fake_codex.py reset --repo demo_repo
-python gate.py --repo demo_repo --task task.md
-```
-
-Gate uses the verified CLI forms `codex exec --json --sandbox workspace-write`
-and `codex exec resume --json <thread_id>`. A live agent may be falsified and
-resume with evidence, or it may produce the complete fix in round 1.
+Use canonical `theustad.py`, `THEUSTAD_*`, `theustad@personal`, and
+`$theustad:*` names for all new work. Gate artifacts below are historical
+evidence and migration references only.
 
 ## Audit verification
 
-Every run prints its timestamped audit path and final root:
-
-```text
-AUDIT_LOG /path/to/audit_YYYYmmdd_HHMMSS.jsonl
-AUDIT_ROOT <sha256>
-```
-
-Validate the log independently:
+Every run reports an `AUDIT_LOG` and `AUDIT_ROOT`. Validate the exact emitted
+log independently:
 
 ```bash
-python verify_chain.py /path/to/audit_YYYYmmdd_HHMMSS.jsonl
+python verify_chain.py /absolute/path/to/audit_YYYYmmdd_HHMMSS.jsonl
 ```
 
-Anchor the printed root outside the log in both a pushed Git commit and the
-submission text. Editing a chained record then becomes detectable relative to
-that external anchor. TheUstad does not claim HMAC, signing, or remote
-attestation.
+Anchor the printed SHA-256 root outside the log, such as in a pushed commit or
+release record. TheUstad does not claim signing, HMAC, or remote attestation.
 
-## Security contract and limits
+## Evidence and reproducibility
 
-TheUstad freezes tests, pytest configuration, conftest files, Python shadowing
-paths, and startup customization files outside the target repository. It uses
-an absolute interpreter with `-I -B -m pytest -q`; `-B` prevents the trusted
-verifier from creating new protected bytecode under `tests/**`. Agent process
-groups are stopped before checks, manifests are checked before and after the
-verifier, timeouts are explicit, and only `VERIFIED` exits zero.
+The public historical recordings and their immutable source artifacts remain
+available for review:
 
-This is a repository-level anti-reward-hacking harness, not an operating-system
-security boundary. Its limits are:
+- Devpost history: https://devpost.com/software/gate-0lypv2
+- Narrated real-project recording: https://youtu.be/cAaMzRLyqWQ
+- Deterministic rehearsal recording: https://youtu.be/kGGdz649zCQ
+- Original public recording: https://youtu.be/njgvvLapxs0
+- Historical video files, digests, and labels: [docs/video/README.md](docs/video/README.md)
+- Permanent audit and recording evidence: [docs/evidence](docs/evidence/README.md)
 
-- Application code can detect tests or terminate the test process. TheUstad does
-  not turn a weak verifier into a strong oracle.
-- A hostile human or same-user process outside the Codex sandbox can attack
-  TheUstad state.
-- Kernel-level interference is out of scope.
-- Protected baseline tests are immutable in v2. Legitimate edits and
-  agent-authored trusted tests are not supported.
-- TheUstad verifies only the configured invariant, not every meaning in the
-  agent's prose.
-- Native Windows, HMAC/signatures, remote attestation, multiple verifiers, and
-  hook integration are roadmap work.
+The anchored rehearsal root is
+`200042504cd90869d2bc8edcd60278049e231ead88ae69a60919a64a335d4a20`.
 
-## Build provenance
+## Supported platforms
 
-TheUstad's core was built through Codex with GPT-5.6 from `docs/SPEC.md`. Codex
-implemented the Prompt 0-7 core, tests, adversarial rehearsal, and evidence
-documentation in build/feedback session
-`019f708d-eb32-72d0-a58d-fdd5ffcff511`; the separate live `codex exec` coda
-used thread `019f78cf-2302-7670-a725-6c89a41699c8`. The seeded fixture and
-independent `verify_chain.py` oracle were supplied inputs. The excluded v1
-prototype and private red-team scripts were not implementation inputs.
+- Python 3.10 or newer.
+- Linux, macOS, or WSL 2 for coding runs.
+- Native Windows `doctor` and `run` fail closed; `$theustad:audit` can inspect
+  an existing audit chain there.
+- Runtime code uses only the Python standard library; pytest is the default
+  verifier and development dependency.
+
+## Security boundaries
+
+TheUstad resolves a trusted absolute Python, uses isolated mode and `shell=False`,
+freezes configured inputs, terminates the agent process group, checks manifests
+before and after the verifier, resumes the exact thread ID, and records a final
+claim classification. It is a repository-level anti-tampering harness, not an
+operating-system security boundary against a hostile user, process, or kernel.
+
+`VERIFIED` means the explicit custom verifier or default protected verifier
+passed after a completion claim. It does not prove every product requirement or
+guarantee absence of defects.
+
+## License and attribution
+
+TheUstad is licensed under [GPL-3.0-or-later](LICENSE). Preserve the license,
+copyright, source, and attribution notices described in [NOTICE](NOTICE) when
+redistributing modified copies.
+
+## OpenAI Build Week
+
+TheUstad was prepared for OpenAI Build Week. The Build Week submission and
+historical Gate recordings are retained as historical evidence; current setup,
+commands, and release guidance use TheUstad.

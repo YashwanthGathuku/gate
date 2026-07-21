@@ -575,7 +575,7 @@ def test_readme_documents_complete_plugin_workflow_and_platform_boundary():
         "Linux, macOS, or WSL 2",
         "Native Windows",
         "separate TheUstad-controlled child",
-        "## Choose an interface",
+        "## Choose CLI or Codex plugin",
         "Standalone CLI",
         "docs/demo/README.md",
         "docs/PLUGIN_GUIDE.md",
@@ -599,7 +599,8 @@ def test_readme_leads_with_verified_problem_and_single_core_architecture():
         "same enforcement core",
         "allowlisted copy",
         "TheUstad succeeds when completion becomes falsifiable and reproducible",
-        "docs/video/gate-real-project-live.mp4",
+        "Formerly Gate",
+        "explicit custom verifier",
         "GPL-3.0-or-later",
     ):
         assert required in readme
@@ -607,17 +608,17 @@ def test_readme_leads_with_verified_problem_and_single_core_architecture():
     assert "MIT" not in readme
 
 
-def test_legacy_gate_demo_documents_both_interfaces_and_honesty_boundaries():
+def test_theustad_demo_documents_both_interfaces_and_honesty_boundaries():
     demo = (ROOT / "docs" / "demo" / "README.md").read_text(encoding="utf-8")
 
     for required in (
         "pytest-dev/iniconfig",
         "77db208ab4ae0cd2061d909fe222a1db72867850",
         "human-authored acceptance test",
-        "$gate:doctor",
-        "$gate:run",
-        "$gate:audit",
-        "gate.py --repo",
+        "$theustad:doctor",
+        "$theustad:run",
+        "$theustad:audit",
+        "theustad.py",
         "Linux, macOS, or WSL 2",
         "not an existing upstream issue",
     ):
