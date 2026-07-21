@@ -13,9 +13,9 @@ FIXED_TIME = datetime(2026, 7, 18, 12, 34, 56, tzinfo=timezone.utc)
 
 def _audit_chain(tmp_path):
     try:
-        from gatelib.chain import AuditChain
+        from theustadlib.chain import AuditChain
     except ModuleNotFoundError:
-        pytest.fail("gatelib.chain is not implemented", pytrace=False)
+        pytest.fail("theustadlib.chain is not implemented", pytrace=False)
     return AuditChain(tmp_path, clock=lambda: FIXED_TIME)
 
 

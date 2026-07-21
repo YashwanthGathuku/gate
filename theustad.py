@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate v2 command-line orchestrator."""
+"""TheUstad 1.0 command-line orchestrator."""
 
 import argparse
 import os
@@ -12,9 +12,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, TextIO
 
-from gatelib.chain import AuditChain
-from gatelib.claims import Claim, find_claims
-from gatelib.freezer import (
+from theustadlib.chain import AuditChain
+from theustadlib.claims import Claim, find_claims
+from theustadlib.freezer import (
     DEFAULT_PATTERNS,
     Manifest,
     Tampering,
@@ -22,13 +22,13 @@ from gatelib.freezer import (
     freeze,
     restore,
 )
-from gatelib.session import (
+from theustadlib.session import (
     DEFAULT_INITIAL_CMD,
     DEFAULT_RESUME_TEMPLATE,
     AgentSession,
     SessionResult,
 )
-from gatelib.verifier import (
+from theustadlib.verifier import (
     VerificationResult,
     default_argv,
     parse_command as parse_verifier_command,
@@ -112,7 +112,7 @@ def _claim_data(message: str, claims: Sequence[Claim]) -> dict[str, Any]:
 
 def _tamper_resume_message(tampering: Tampering) -> str:
     return (
-        "Gate detected protected-input tampering and restored the baseline. "
+        "TheUstad detected protected-input tampering and restored the baseline. "
         "You must fix code rather than trusted tests. "
         f"Modified: {tampering.modified or ['none']}; "
         f"deleted: {tampering.deleted or ['none']}; "
@@ -126,7 +126,7 @@ def _evidence_resume_message(
 ) -> str:
     evidence = "\n".join(verification.tail) or "Verifier produced no output."
     if verdict is Verdict.FALSIFIED:
-        prefix = "Gate falsified the completion claim with the trusted verifier."
+        prefix = "TheUstad falsified the completion claim with the trusted verifier."
     else:
         prefix = "The trusted verifier still fails and the task is incomplete."
     return f"{prefix}\n\nVerifier evidence:\n{evidence}\n\nFix the code and report status."
@@ -416,7 +416,7 @@ def _task_text(value: str | None) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="gate.py",
+        prog="theustad.py",
         description="Verify coding-agent completion claims with protected evidence.",
     )
     parser.add_argument("--repo", required=True, type=Path)
@@ -467,7 +467,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             else DEFAULT_PATTERNS
         )
         state_dir = args.state_dir or Path(
-            tempfile.mkdtemp(prefix="gate-v2-state-")
+            tempfile.mkdtemp(prefix="theustad-state-")
         )
         log_dir = args.log or state_dir / "logs"
         session = AgentSession(
@@ -489,7 +489,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return runner.run().exit_code
     except (OSError, ValueError, RuntimeError) as error:
-        _console_output(f"GATE_ERROR {error}", stream=sys.stderr)
+        _console_output(f"THEUSTAD_ERROR {error}", stream=sys.stderr)
         return 2
 
 

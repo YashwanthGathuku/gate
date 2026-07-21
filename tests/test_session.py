@@ -9,9 +9,9 @@ import pytest
 
 def _session_module():
     try:
-        from gatelib import session
+        from theustadlib import session
     except ImportError:
-        pytest.fail("gatelib.session is not implemented", pytrace=False)
+        pytest.fail("theustadlib.session is not implemented", pytrace=False)
     return session
 
 

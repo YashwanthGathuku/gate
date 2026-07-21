@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from gatelib import events
+from theustadlib import events
 
 
 SCHEMA_SAMPLES = Path(__file__).parents[1] / "docs" / "schema_samples.jsonl"
@@ -118,7 +118,7 @@ def test_describe_surfaces_commands_files_and_generic_event_types():
         "item": {
             "type": "file_change",
             "changes": [
-                {"path": "gatelib/events.py", "kind": "update"},
+                {"path": "theustadlib/events.py", "kind": "update"},
                 {"path": "tests/test_events.py", "kind": "create"},
             ],
         },
@@ -126,7 +126,7 @@ def test_describe_surfaces_commands_files_and_generic_event_types():
 
     assert events.describe(command_event) == "command: python -m pytest tests -q"
     assert events.describe(file_event) == (
-        "files: gatelib/events.py, tests/test_events.py"
+        "files: theustadlib/events.py, tests/test_events.py"
     )
     assert events.describe({"type": "turn.started"}) == "turn.started"
     assert events.describe({}) == "event"

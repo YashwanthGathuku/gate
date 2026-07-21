@@ -10,12 +10,12 @@ import pytest
 VERIFY_CHAIN = Path(__file__).parents[1] / "verify_chain.py"
 
 
-def _gate():
+def _theustad():
     try:
-        import gate
+        import theustad
     except ModuleNotFoundError:
-        pytest.fail("gate.py is not implemented", pytrace=False)
-    return gate
+        pytest.fail("theustad.py is not implemented", pytrace=False)
+    return theustad
 
 
 class ScriptedSession:
@@ -82,8 +82,8 @@ def protected_repo(tmp_path):
     return repo
 
 
-def _run_gate(
-    gate,
+def _run_theustad(
+    theustad,
     repo,
     session,
     verifier_runner,
@@ -95,7 +95,7 @@ def _run_gate(
     kwargs = {}
     if claim_finder is not None:
         kwargs["claim_finder"] = claim_finder
-    runner = gate.GateRunner(
+    runner = theustad.GateRunner(
         repo=repo,
         task="implement the task",
         session=session,
@@ -128,7 +128,7 @@ def test_verdict_matrix_and_only_verified_exits_zero(
     expected,
     expected_exit,
 ):
-    gate = _gate()
+    theustad = _theustad()
     session = ScriptedSession([_agent_result(message)])
     verifier_calls = []
 
@@ -136,7 +136,7 @@ def test_verdict_matrix_and_only_verified_exits_zero(
         verifier_calls.append((tuple(argv), Path(repo), timeout))
         return _verification_result(verifier_exit)
 
-    result, _ = _run_gate(gate, protected_repo, session, run_verifier)
+    result, _ = _run_theustad(theustad, protected_repo, session, run_verifier)
 
     assert result.verdict.value == expected
     assert result.exit_code == expected_exit
@@ -161,13 +161,13 @@ def test_agent_failure_precedes_claims_and_stale_green_verifier(
     agent_result,
     expected,
 ):
-    gate = _gate()
+    theustad = _theustad()
     session = ScriptedSession([agent_result])
 
     def stale_green(*args, **kwargs):
         pytest.fail("verifier must not run after an agent failure")
 
-    result, _ = _run_gate(gate, protected_repo, session, stale_green)
+    result, _ = _run_theustad(theustad, protected_repo, session, stale_green)
 
     assert result.verdict.value == expected
     assert result.exit_code != 0
@@ -176,7 +176,7 @@ def test_agent_failure_precedes_claims_and_stale_green_verifier(
 def test_post_agent_tampering_precedes_claims_and_verifier_and_is_restored(
     protected_repo,
 ):
-    gate = _gate()
+    theustad = _theustad()
     trusted_test = protected_repo / "tests" / "test_trusted.py"
     baseline = trusted_test.read_text(encoding="utf-8")
     session = ScriptedSession(
@@ -187,7 +187,7 @@ def test_post_agent_tampering_precedes_claims_and_verifier_and_is_restored(
     def stale_green(*args, **kwargs):
         pytest.fail("verifier must not run after agent tampering")
 
-    result, _ = _run_gate(gate, protected_repo, session, stale_green)
+    result, _ = _run_theustad(theustad, protected_repo, session, stale_green)
 
     assert result.verdict.value == "TAMPERED"
     assert result.exit_code != 0
@@ -196,7 +196,7 @@ def test_post_agent_tampering_precedes_claims_and_verifier_and_is_restored(
 
 
 def test_pre_verifier_manifest_check_blocks_new_tampering(protected_repo):
-    gate = _gate()
+    theustad = _theustad()
     trusted_test = protected_repo / "tests" / "test_trusted.py"
     baseline = trusted_test.read_text(encoding="utf-8")
     session = ScriptedSession([_agent_result("The task is complete.")])
@@ -208,8 +208,8 @@ def test_pre_verifier_manifest_check_blocks_new_tampering(protected_repo):
     def stale_green(*args, **kwargs):
         pytest.fail("verifier must not run after pre-verifier tampering")
 
-    result, _ = _run_gate(
-        gate,
+    result, _ = _run_theustad(
+        theustad,
         protected_repo,
         session,
         stale_green,
@@ -221,7 +221,7 @@ def test_pre_verifier_manifest_check_blocks_new_tampering(protected_repo):
 
 
 def test_post_verifier_race_tampering_overrides_green_verifier(protected_repo):
-    gate = _gate()
+    theustad = _theustad()
     trusted_test = protected_repo / "tests" / "test_trusted.py"
     baseline = trusted_test.read_text(encoding="utf-8")
     session = ScriptedSession([_agent_result("The task is complete.")])
@@ -230,7 +230,7 @@ def test_post_verifier_race_tampering_overrides_green_verifier(protected_repo):
         trusted_test.write_text("assert False\n", encoding="utf-8")
         return _verification_result(0, tail=("1 passed",))
 
-    result, _ = _run_gate(gate, protected_repo, session, racing_verifier)
+    result, _ = _run_theustad(theustad, protected_repo, session, racing_verifier)
 
     assert result.verdict.value == "TAMPERED"
     assert result.exit_code != 0
@@ -242,14 +242,14 @@ def test_manifest_checks_immediately_follow_agent_and_verifier(
     protected_repo,
     monkeypatch,
 ):
-    gate = _gate()
+    theustad = _theustad()
     order = []
     session = ScriptedSession(
         [_agent_result("The task is complete.")],
         actions=[lambda: order.append("agent_return")],
     )
-    real_check = gate.check
-    real_append = gate.AuditChain.append
+    real_check = theustad.check
+    real_append = theustad.AuditChain.append
 
     def ordered_check(repo, manifest):
         order.append("manifest_check")
@@ -273,10 +273,10 @@ def test_manifest_checks_immediately_follow_agent_and_verifier(
         result.warning = "verifier warning"
         return result
 
-    monkeypatch.setattr(gate, "check", ordered_check)
-    monkeypatch.setattr(gate.AuditChain, "append", ordered_append)
+    monkeypatch.setattr(theustad, "check", ordered_check)
+    monkeypatch.setattr(theustad.AuditChain, "append", ordered_append)
 
-    _run_gate(gate, protected_repo, session, ordered_verifier)
+    _run_theustad(theustad, protected_repo, session, ordered_verifier)
 
     assert order == [
         "agent_return",
@@ -290,7 +290,7 @@ def test_manifest_checks_immediately_follow_agent_and_verifier(
 
 
 def test_tamper_resume_lists_files_and_requires_code_fix(protected_repo):
-    gate = _gate()
+    theustad = _theustad()
     trusted_test = protected_repo / "tests" / "test_trusted.py"
     baseline = trusted_test.read_text(encoding="utf-8")
 
@@ -308,8 +308,8 @@ def test_tamper_resume_lists_files_and_requires_code_fix(protected_repo):
         ],
     )
 
-    result, _ = _run_gate(
-        gate,
+    result, _ = _run_theustad(
+        theustad,
         protected_repo,
         session,
         lambda argv, repo, timeout: _verification_result(0),
@@ -327,7 +327,7 @@ def test_tamper_resume_lists_files_and_requires_code_fix(protected_repo):
 def test_pass_no_claim_resumes_only_once_and_remains_non_successful(
     protected_repo,
 ):
-    gate = _gate()
+    theustad = _theustad()
     session = ScriptedSession(
         [
             _agent_result("I am still working on it."),
@@ -335,8 +335,8 @@ def test_pass_no_claim_resumes_only_once_and_remains_non_successful(
         ]
     )
 
-    result, _ = _run_gate(
-        gate,
+    result, _ = _run_theustad(
+        theustad,
         protected_repo,
         session,
         lambda argv, repo, timeout: _verification_result(0),
@@ -353,11 +353,11 @@ def test_pass_no_claim_resumes_only_once_and_remains_non_successful(
 
 
 def test_final_record_root_is_printed_and_valid(protected_repo):
-    gate = _gate()
+    theustad = _theustad()
     session = ScriptedSession([_agent_result("The task is complete.")])
 
-    result, output = _run_gate(
-        gate,
+    result, output = _run_theustad(
+        theustad,
         protected_repo,
         session,
         lambda argv, repo, timeout: _verification_result(0),

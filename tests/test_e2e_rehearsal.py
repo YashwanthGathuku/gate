@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-GATE = ROOT / "gate.py"
+THEUSTAD = ROOT / "theustad.py"
 FAKE_CODEX = ROOT / "fake_codex.py"
 TASK = ROOT / "task.md"
 VERIFY_CHAIN = ROOT / "verify_chain.py"
@@ -39,13 +39,13 @@ def _reset_repo(tmp_path):
 
 def _run_scenario(tmp_path, scenario, *, max_retries=3):
     repo = _reset_repo(tmp_path)
-    state_dir = tmp_path / "gate-state"
+    state_dir = tmp_path / "theustad-state"
     log_dir = tmp_path / "audit"
     python = Path(sys.executable).as_posix()
     fake = FAKE_CODEX.as_posix()
     command = [
         sys.executable,
-        str(GATE),
+        str(THEUSTAD),
         "--repo",
         str(repo),
         "--task",

@@ -8,9 +8,9 @@ import pytest
 
 def _verifier():
     try:
-        from gatelib import verifier
+        from theustadlib import verifier
     except ImportError:
-        pytest.fail("gatelib.verifier is not implemented", pytrace=False)
+        pytest.fail("theustadlib.verifier is not implemented", pytrace=False)
     return verifier
 
 

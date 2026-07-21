@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from gatelib import freezer
+from theustadlib import freezer
 
 
 EXPECTED_DEFAULT_PATTERNS = (
@@ -22,7 +22,7 @@ EXPECTED_DEFAULT_PATTERNS = (
 
 def _seed_repo(tmp_path: Path) -> tuple[Path, Path]:
     repo = tmp_path / "repo"
-    state_dir = tmp_path / "gate-state"
+    state_dir = tmp_path / "theustad-state"
     (repo / "tests").mkdir(parents=True)
     (repo / "app").mkdir()
     (repo / "tests" / "test_guard.py").write_text("def test_guard(): pass\n")
@@ -60,7 +60,7 @@ def test_freeze_refuses_state_dir_inside_repo(tmp_path):
     repo, _ = _seed_repo(tmp_path)
 
     with pytest.raises(ValueError, match="outside the repository"):
-        freezer.freeze(repo, freezer.DEFAULT_PATTERNS, repo / ".gate-state")
+        freezer.freeze(repo, freezer.DEFAULT_PATTERNS, repo / ".theustad-state")
 
 
 def test_check_is_clean_immediately_after_freeze(tmp_path):

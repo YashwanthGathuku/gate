@@ -1,6 +1,6 @@
 import pytest
 
-from gatelib import claims
+from theustadlib import claims
 
 
 @pytest.mark.parametrize(
