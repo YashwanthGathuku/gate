@@ -26,6 +26,8 @@ one H.264 video stream and one AAC audio stream, rejects silent narration, and
 records the final probe and digest. The published candidate's SHA-256 is
 `D236FF13EF24A5F1F065F32D1E19158D59AE983C6F0D6C41F993081F62DC1A86`.
 
+Public YouTube video: https://youtu.be/D1nlvLk9iv8
+
 ## Historical Gate recordings
 
 The following immutable files, URLs, digests, captions, and honesty labels are

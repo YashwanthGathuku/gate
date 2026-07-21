@@ -181,11 +181,11 @@ release record. TheUstad does not claim signing, HMAC, or remote attestation.
 
 ## Evidence and reproducibility
 
-The public historical recordings and their immutable source artifacts remain
-available for review:
+The current submission, narrated demo, release evidence, and preserved
+historical artifacts are available for review:
 
 - Devpost history: https://devpost.com/software/gate-0lypv2
-- Narrated real-project recording: https://youtu.be/cAaMzRLyqWQ
+- Current 70-second narrated TheUstad demo and [publication evidence](docs/evidence/theustad-1.0/publication.txt): https://youtu.be/D1nlvLk9iv8
 - Deterministic rehearsal recording: https://youtu.be/kGGdz649zCQ
 - Original public recording: https://youtu.be/njgvvLapxs0
 - Historical video files, digests, and labels: [docs/video/README.md](docs/video/README.md)

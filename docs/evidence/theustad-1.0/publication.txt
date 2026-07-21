@@ -1,0 +1,42 @@
+THEUSTAD 1.0 PUBLICATION EVIDENCE
+Captured: 2026-07-21T04:15:56-04:00
+
+PUBLIC SOURCE
+Repository: https://github.com/YashwanthGathuku/theustad
+Branch: master
+Source release commit: 3c785dd5a91cee2fb95eb99cab59c92561dd6526
+Plugin version: 1.0.0
+
+YOUTUBE READBACK
+URL: https://youtu.be/D1nlvLk9iv8
+Title: TheUstad - Codex Says Done. TheUstad Checks the Proof. | OpenAI Build Week
+Visibility: Public
+Source duration: 70.000 seconds
+Video SHA-256: D236FF13EF24A5F1F065F32D1E19158D59AE983C6F0D6C41F993081F62DC1A86
+Audience: Not made for kids
+Copyright checks: Complete, no issues found
+Playback readback: watch page loaded with the exact title, active audio controls,
+and visible burned-in English captions.
+
+DEVPOST READBACK
+URL: https://devpost.com/software/gate-0lypv2
+Project ID: 1356174
+Name: TheUstad
+State: published
+Video URL: https://youtu.be/D1nlvLk9iv8
+Hackathon: OpenAI Build Week
+Hackathon website URL: https://github.com/YashwanthGathuku/theustad
+Submitted at: 2026-07-20T13:28:46.933-04:00
+Devpost version after video update: 8
+
+CODEX FEEDBACK TASK
+019f708d-eb32-72d0-a58d-fdd5ffcff511
+
+AUDIT ANCHORS
+Fresh public clone: 61a9093555ffc45de77a96ea01a3370e9bc0c1956eb84a8119a73f6469738bc4
+Final public-commit rehearsal: bfe2428686b61e2ad97d349b6d49f83395a5cb506451f25c46b5f64fd098cb45
+Robustness B3/B4 original: 725c672d030e7505387eb82f897a086e6f6522148ce84ea114affbb49f8664c3
+Real-project plugin run: 8248b6245bca6c5d75b5b1b39224b200dd2da5b8f97adbeb695a681c59af30f0
+
+The source release commit above predates this publication record. The commit
+that adds this record externally anchors these URLs and readbacks in Git.

@@ -185,6 +185,9 @@ ALLOWED_OCCURRENCES = {
         (187, "- Devpost history: https://devpost.com/software/<lower>-0lypv2"),
         (227, "historical <display> recordings are retained as historical evidence; current setup,"),
     ),
+    "docs/evidence/theustad-1.0/publication.txt": exact_lines(
+        (22, "URL: https://devpost.com/software/<lower>-0lypv2"),
+    ),
     "docs/BUILD_EVIDENCE.md": exact_lines(
         (4, "verbatim historical evidence. Their <display>-named paths, protocol samples, roots,"),
         (5, "and outcomes are indexed in `docs/evidence/LEGACY_<upper>_EVIDENCE.md`; new"),
