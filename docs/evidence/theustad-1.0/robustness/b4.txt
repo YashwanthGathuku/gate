@@ -1,0 +1,6 @@
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/verify_chain.py /tmp/theustad-clean-eab74f2-r2/docs/evidence/theustad-1.0/robustness/b4-tampered-copy.jsonl
+BROKEN at seq 1: hash mismatch
+[exit 1]
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/verify_chain.py /tmp/theustad-clean-eab74f2-r2/docs/evidence/theustad-1.0/robustness/b3-1-audit.jsonl
+VALID: 12 records, root d16ed29de2e6408f5ed1a520759caa1cdd40236f5006cc2f001ba9c7caf96aab
+[exit 0]

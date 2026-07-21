@@ -1,94 +1,42 @@
 THEUSTAD 1.0 PUBLIC FRESH-CLONE VALIDATION
-UTC 2026-07-21T07:32:55Z
+UTC 2026-07-21T08:56:21Z
 
 PUBLIC SOURCE
-Command: git clone https://github.com/YashwanthGathuku/theustad.git /home/gathu/theustad-judge-check
+Command: git clone https://github.com/YashwanthGathuku/theustad.git /home/gathu/theustad-release-eab74f2-2
 Exit: 0
-BRANCH master
-HEAD a10eeaef5c17b43d1646c14da17d32f6ba6d9fab
-ORIGIN https://github.com/YashwanthGathuku/theustad.git
+Branch: master
+HEAD: eab74f24e1ccdda8109c4a71d6885af867955f37
+Origin: https://github.com/YashwanthGathuku/theustad.git
 
-RELEASE TESTS
-Windows command: python -m pytest tests -q
+WINDOWS RELEASE TESTS
+Command: python -m pytest tests -q
 Exit: 0
-213 passed, 4 skipped in 41.39s
+Result: 188 passed, 4 skipped in 70.73s
+The skips are the documented POSIX process-group and symlink cases.
 
-WSL command: env PATH=/usr/bin:/bin /home/gathu/.local/share/theustad/plugin-venv/bin/python -m pytest tests -q
+WSL RELEASE TESTS
+Command: PATH=/home/gathu/.local/share/theustad/plugin-venv/bin:/usr/bin:/bin /home/gathu/.local/share/theustad/plugin-venv/bin/python -m pytest tests -q
+Working directory: /home/gathu/theustad-release-eab74f2-2
 Exit: 0
-217 passed in 36.98s
+Result: 192 passed in 17.29s
 
-FRESH EXTERNAL PYTHON
-Command: python3 -m venv /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python -m pip install --upgrade pip pytest
+ADVERSARIAL MATRIX
+Source commit: eab74f24e1ccdda8109c4a71d6885af867955f37
+Source path: /tmp/theustad-clean-eab74f2-r2
+Python: /home/gathu/.local/share/theustad/plugin-venv/bin/python
+Python verifier: pytest 9.1.1
+JavaScript verifier: npm 9.2.0 with Node.js 18.19.1
 Exit: 0
-Python 3.12.3
-pytest 9.1.1
+Result: 18 of 18 scenario checks passed
+B3/B4 original audit root: d16ed29de2e6408f5ed1a520759caa1cdd40236f5006cc2f001ba9c7caf96aab
+Artifact SHA-256 check: every entry in robustness/sha256sums.txt is OK
 
-FRESH ISOLATED PLUGIN INSTALL
-Environment:
-  HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home
-  CODEX_HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.codex
-  XDG_CONFIG_HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.config
-  XDG_DATA_HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.local/share
-  XDG_STATE_HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.local/state
-  XDG_CACHE_HOME=/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.cache
-  PATH=/home/gathu/.local/bin:/usr/bin:/bin
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/theustad-judge-check/scripts/install_plugin.py --home /home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home
-Exit: 0
-THEUSTAD_PLUGIN_SOURCE /home/gathu/theustad-judge-check
-THEUSTAD_PLUGIN_INSTALLED /home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/plugins/theustad
-THEUSTAD_PLUGIN_MARKETPLACE /home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.agents/plugins/marketplace.json
+CODEX APP PLUGIN
+Installed ID: theustad@personal
+Version: 1.0.0
+Installed: true
+Enabled: true
+Retired plugin matches: 0
+Canonical local source: C:\Users\Gathu\Projects\theustad
 
-Command: codex plugin list --json
-Exit: 0
-{
-  "installed": [
-    {
-      "pluginId": "theustad@personal",
-      "name": "theustad",
-      "marketplaceName": "personal",
-      "version": "1.0.0",
-      "installed": true,
-      "enabled": true,
-      "source": {
-        "source": "local",
-        "path": "/home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/plugins/theustad"
-      },
-      "installPolicy": "AVAILABLE",
-      "authPolicy": "ON_INSTALL"
-    }
-  ],
-  "available": []
-}
-
-INSTALLED PACKAGE DOCTOR
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.codex/plugins/cache/personal/theustad/1.0.0/scripts/theustad_plugin.py doctor --repo /home/gathu/theustad-judge-check --state-home /home/gathu/.local/share/theustad-judge-a10eeae-20260721/state
-Exit: 0
-THEUSTAD_DOCTOR_REPO /home/gathu/theustad-judge-check
-THEUSTAD_DOCTOR_PYTHON /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python (3.12.3)
-THEUSTAD_DOCTOR_CODEX /home/gathu/.local/bin/codex (codex-cli 0.144.6)
-THEUSTAD_DOCTOR_VERIFIER isolated pytest
-THEUSTAD_DOCTOR_STATE_HOME /home/gathu/.local/share/theustad-judge-a10eeae-20260721/state
-THEUSTAD_DOCTOR_OK
-
-DETERMINISTIC DEMO3 PROOF
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/theustad-judge-check/theustad.py --repo /home/gathu/theustad-judge-check/demo_repo --task /home/gathu/theustad-judge-check/task.md --cmd "/home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/theustad-judge-check/fake_codex.py demo3" --resume-cmd "/home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/theustad-judge-check/fake_codex.py demo3 --resume {thread_id}" --state-dir /home/gathu/.local/share/theustad-judge-a10eeae-20260721/demo3-state --log /home/gathu/.local/share/theustad-judge-a10eeae-20260721/logs --max-retries 3 --no-color
-Exit: 0
-CHILD_THREAD 00000000-0000-4000-8000-000000000003
-ROUND 1 FALSIFIED
-ROUND 2 TAMPERED
-ROUND 3 VERIFIED
-FINAL VERIFIED
-AUDIT_LOG /home/gathu/.local/share/theustad-judge-a10eeae-20260721/logs/audit_20260721_073153.jsonl
-AUDIT_ROOT 61a9093555ffc45de77a96ea01a3370e9bc0c1956eb84a8119a73f6469738bc4
-
-INDEPENDENT VALIDATION
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/theustad-judge-check/verify_chain.py /home/gathu/.local/share/theustad-judge-a10eeae-20260721/logs/audit_20260721_073153.jsonl
-Exit: 0
-VALID: 12 records, root 61a9093555ffc45de77a96ea01a3370e9bc0c1956eb84a8119a73f6469738bc4
-
-Command: /home/gathu/.local/share/theustad-judge-a10eeae-20260721/venv/bin/python /home/gathu/.local/share/theustad-judge-a10eeae-20260721/codex-home/.codex/plugins/cache/personal/theustad/1.0.0/scripts/theustad_plugin.py audit /home/gathu/.local/share/theustad-judge-a10eeae-20260721/logs/audit_20260721_073153.jsonl
-Exit: 0
-VALID: 12 records, root 61a9093555ffc45de77a96ea01a3370e9bc0c1956eb84a8119a73f6469738bc4
-
-The audit root above is externally anchored by the Git commit that adds this file.
+The commit that adds this record externally anchors the matrix roots and output.

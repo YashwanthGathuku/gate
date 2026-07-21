@@ -1,0 +1,36 @@
+THEUSTAD 1.0 CODEX APP INSTALLATION EVIDENCE
+UTC 2026-07-21T08:53:29Z
+CODEX_VERSION codex-cli 0.144.5
+INSTALL_OUTPUT_BEGIN
+{
+  "pluginId": "theustad@personal",
+  "name": "theustad",
+  "marketplaceName": "personal",
+  "version": "1.0.0",
+  "installedPath": "C:\\Users\\Gathu\\.codex\\plugins\\cache\\personal\\theustad\\1.0.0",
+  "authPolicy": "ON_INSTALL"
+}
+THEUSTAD_PLUGIN_SOURCE C:\Users\Gathu\Projects\theustad
+THEUSTAD_PLUGIN_INSTALLED C:\Users\Gathu\plugins\theustad
+THEUSTAD_PLUGIN_MARKETPLACE C:\Users\Gathu\.agents\plugins\marketplace.json
+INSTALL_OUTPUT_END
+INSTALL_EXIT 0
+THEUSTAD_READBACK_BEGIN
+{
+    "pluginId":  "theustad@personal",
+    "name":  "theustad",
+    "marketplaceName":  "personal",
+    "version":  "1.0.0",
+    "installed":  true,
+    "enabled":  true,
+    "source":  {
+                   "source":  "local",
+                   "path":  "C:\\Users\\Gathu\\plugins\\theustad"
+               },
+    "installPolicy":  "AVAILABLE",
+    "authPolicy":  "ON_INSTALL"
+}
+THEUSTAD_READBACK_END
+LIST_EXIT 0
+RETIRED_PLUGIN_MATCHES 0
+INSTALLED_AUDIT VALID: 12 records, root d16ed29de2e6408f5ed1a520759caa1cdd40236f5006cc2f001ba9c7caf96aab

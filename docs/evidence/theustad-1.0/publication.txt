@@ -4,7 +4,7 @@ Captured: 2026-07-21T04:15:56-04:00
 PUBLIC SOURCE
 Repository: https://github.com/YashwanthGathuku/theustad
 Branch: master
-Source release commit: 3c785dd5a91cee2fb95eb99cab59c92561dd6526
+Source release commit: eab74f24e1ccdda8109c4a71d6885af867955f37
 Plugin version: 1.0.0
 
 YOUTUBE READBACK
@@ -34,7 +34,7 @@ CODEX FEEDBACK TASK
 AUDIT ANCHORS
 Fresh public clone: 61a9093555ffc45de77a96ea01a3370e9bc0c1956eb84a8119a73f6469738bc4
 Final public-commit rehearsal: bfe2428686b61e2ad97d349b6d49f83395a5cb506451f25c46b5f64fd098cb45
-Robustness B3/B4 original: 725c672d030e7505387eb82f897a086e6f6522148ce84ea114affbb49f8664c3
+Robustness B3/B4 original: d16ed29de2e6408f5ed1a520759caa1cdd40236f5006cc2f001ba9c7caf96aab
 Real-project plugin run: 8248b6245bca6c5d75b5b1b39224b200dd2da5b8f97adbeb695a681c59af30f0
 
 The source release commit above predates this publication record. The commit

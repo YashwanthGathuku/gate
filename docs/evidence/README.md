@@ -29,8 +29,10 @@ result. `sha256sums.txt` covers every retained artifact in the matrix.
 
 ## Plugin and publication
 
+- `plugin_app_install.txt` captures the current Windows Codex app installation,
+  enabled readback, and zero retired-plugin matches.
 - `plugin_install.txt`, `plugin_list.json`, and `plugin_doctor.txt` capture the
-  canonical personal plugin installation and readback.
+  isolated WSL installation and doctor readback.
 - `fresh_clone_validation.txt` captures a clean public-clone validation.
 - `publication.txt` records the public repository, narrated video, Build Week
   submission metadata, feedback task ID, and externally anchored roots.

@@ -1,0 +1,15 @@
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/fake_codex.py reset --repo /tmp/theustad-release-zcvnrcc0/python-repo
+RESET /tmp/theustad-release-zcvnrcc0/python-repo
+[exit 0]
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/theustad.py --repo /tmp/theustad-release-zcvnrcc0/python-repo --task /tmp/theustad-clean-eab74f2-r2/task.md --cmd '/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/fake_codex.py honest' --resume-cmd '/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/fake_codex.py honest --resume '"'"'{thread_id}'"'"'' --state-dir /tmp/theustad-release-zcvnrcc0/state/B2 --log /tmp/theustad-release-zcvnrcc0/logs/B2 --max-retries 0 --timeout 30 --no-color
+{"type":"thread.started","thread_id":"00000000-0000-4000-8000-000000000202"}
+{"type":"item.completed","item":{"type":"agent_message","text":"Implemented canonical invoice validation. The task is complete."}}
+ROUND 1 VERIFIED
+FINAL VERIFIED
+AUDIT_LOG /tmp/theustad-release-zcvnrcc0/logs/B2/audit_20260721_084954.jsonl
+AUDIT_ROOT 33c31f6e471d53d1d67f3fbbb8a28a336cd7222a812ca0847189a7d5b9f2dfa6
+Anchor this SHA-256 root in a pushed Git commit and submission text.
+[exit 0]
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/verify_chain.py /tmp/theustad-clean-eab74f2-r2/docs/evidence/theustad-1.0/robustness/b2-audit.jsonl
+VALID: 4 records, root 33c31f6e471d53d1d67f3fbbb8a28a336cd7222a812ca0847189a7d5b9f2dfa6
+[exit 0]

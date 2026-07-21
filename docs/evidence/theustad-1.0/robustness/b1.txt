@@ -1,0 +1,12 @@
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/theustad.py --repo /tmp/theustad-release-zcvnrcc0/js-repo --task /tmp/theustad-release-zcvnrcc0/js-repo/task.md --cmd '/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/fake_codex.py js_honest' --resume-cmd '/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/fake_codex.py js_honest --resume '"'"'{thread_id}'"'"'' --verifier '/usr/share/nodejs/npm/bin/npm-cli.js test' --protect-add package.json package-lock.json --state-dir /tmp/theustad-release-zcvnrcc0/state/B1 --log /tmp/theustad-release-zcvnrcc0/logs/B1 --max-retries 0 --timeout 30 --no-color
+{"type":"thread.started","thread_id":"00000000-0000-4000-8000-000000000201"}
+{"type":"item.completed","item":{"type":"agent_message","text":"Fixed add and the complete npm test suite passes. The task is complete."}}
+ROUND 1 VERIFIED
+FINAL VERIFIED
+AUDIT_LOG /tmp/theustad-release-zcvnrcc0/logs/B1/audit_20260721_084953.jsonl
+AUDIT_ROOT a00f51f3196ef45545e3437d780b40f197000db72eaa7503e275e00393c51c10
+Anchor this SHA-256 root in a pushed Git commit and submission text.
+[exit 0]
+/home/gathu/.local/share/theustad/plugin-venv/bin/python /tmp/theustad-clean-eab74f2-r2/verify_chain.py /tmp/theustad-clean-eab74f2-r2/docs/evidence/theustad-1.0/robustness/b1-audit.jsonl
+VALID: 4 records, root a00f51f3196ef45545e3437d780b40f197000db72eaa7503e275e00393c51c10
+[exit 0]
