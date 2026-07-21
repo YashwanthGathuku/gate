@@ -414,6 +414,18 @@ def _task_text(value: str | None) -> str:
     return value
 
 
+def _flatten_patterns(groups: Sequence[Sequence[str]] | None) -> tuple[str, ...]:
+    return tuple(item for group in (groups or ()) for item in group)
+
+
+def _protected_patterns(
+    overrides: Sequence[Sequence[str]] | None,
+    additions: Sequence[Sequence[str]] | None,
+) -> tuple[str, ...]:
+    base = _flatten_patterns(overrides) if overrides else DEFAULT_PATTERNS
+    return (*base, *_flatten_patterns(additions))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="theustad.py",
@@ -430,6 +442,13 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         metavar="PATTERN",
         help="protected path pattern; may be repeated",
+    )
+    parser.add_argument(
+        "--protect-add",
+        action="append",
+        nargs="+",
+        metavar="PATTERN",
+        help="protected path pattern appended to the default or explicit set",
     )
     parser.add_argument("--state-dir", type=Path)
     parser.add_argument("--max-retries", type=_nonnegative, default=3)
@@ -461,11 +480,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.verifier
             else default_argv()
         )
-        patterns = (
-            tuple(pattern for group in args.protect for pattern in group)
-            if args.protect
-            else DEFAULT_PATTERNS
-        )
+        patterns = _protected_patterns(args.protect, args.protect_add)
         state_dir = args.state_dir or Path(
             tempfile.mkdtemp(prefix="theustad-state-")
         )
